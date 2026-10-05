@@ -1,0 +1,11 @@
+{
+  "ships": [
+    {"id": "ship_1", "width": 5, "length": 4, "max_capacity": 8}
+  ],
+  "vehicles": [
+    {"id": "A", "width": 2, "length": 2, "shipping_fee": 60, "weight": 3, "eta": 2},
+    {"id": "B", "width": 1, "length": 3, "shipping_fee": 40, "weight": 4, "eta": 1},
+    {"id": "C", "width": 2, "length": 1, "shipping_fee": 30, "weight": 2, "eta": 3},
+    {"id": "D", "width": 1, "length": 1, "shipping_fee": 10, "weight": 1, "eta": 0}
+  ]
+}

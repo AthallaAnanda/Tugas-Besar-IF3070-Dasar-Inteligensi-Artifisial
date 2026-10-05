@@ -1,30 +1,29 @@
-"""Cerita soal kapal dan geladaknya.
-
-Di sini kita nyimpen ukuran kapal, kapasitasnya, plus kondisi
-geladak waktu sudah diisi kendaraan. Satu objek ShipState itu
-gambaran satu kapal di dalam satu solusi.
-"""
+"""Ukuran kapal dan kendaraan yang sedang menempati geladaknya."""
 
 from dataclasses import dataclass, field
 
+from .placement import Placement
 
-@dataclass
+
+@dataclass(frozen=True)
 class Ship:
-    """Info statis kapal. Sederhananya ya cuma identitas dan ukuran dulu."""
+    """Kapasitas merupakan batas jumlah berat kendaraan yang diangkut"""
 
-    id: str = "ship_1"
-    width: float = 0.0
-    length: float = 0.0
-    capacity: float = 0.0
+    id: str
+    width: int
+    length: int
+    max_capacity: float
 
-    # TODO Tahap 1 Anggota 1, nanti tambah grid sama daftar placement di sini ya
+    def __post_init__(self):
+        if not self.id or type(self.width) is not int or type(self.length) is not int:
+            raise ValueError("Identitas dan ukuran kapal harus valid")
+        if self.width <= 0 or self.length <= 0 or self.max_capacity < 0:
+            raise ValueError("Ukuran kapal harus positif dan kapasitas tidak boleh negatif")
 
 
 @dataclass
 class ShipState:
-    """Kondisi satu kapal di dalam sebuah State. Ini yang bikin multi ship jadi gampang."""
+    """Penempatan kendaraan pada satu kapal dalam sebuah solusi"""
 
     ship: Ship
-    placements: list = field(default_factory=list)
-
-    # TODO Tahap 1 Anggota 1, nanti bikin helper buat cek grid yang kepakai
+    placements: list[Placement] = field(default_factory=list)

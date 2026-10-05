@@ -1,27 +1,36 @@
-"""Cerita soal penempatan satu kendaraan di atas geladak.
-
-Intinya kita catat kendaraan apa, taruh di kapal mana,
-koordinatnya di mana, sama posisinya tidur atau berdiri.
-"""
+"""Posisi dan orientasi kendaraan yang berada di geladak"""
 
 from dataclasses import dataclass
 
+from .vehicle import Vehicle
 
-@dataclass
+
+@dataclass(frozen=True)
 class Placement:
-    """Satu titik penempatan kendaraan di satu kapal."""
+    """Koordinat x dan y menunjuk sel kiri atas kendaraan pada grid"""
 
     vehicle_id: str
-    ship_id: str = "ship_1"
-    x: float = 0.0
-    y: float = 0.0
-    orientation: str = "horizontal"  # isinya horizontal atau vertical
+    ship_id: str
+    x: int
+    y: int
+    orientation: str = "horizontal"
 
-    def occupied_size(self, vehicle_width: float, vehicle_length: float):
-        """Hitung ukuran kepakai setelah orientasi dipasang. Kalau vertical ya ditukar saja."""
-        # TODO Tahap 1 Anggota 1, lengkapi logika putar ukuran di sini
+    def __post_init__(self):
+        if not self.vehicle_id or not self.ship_id:
+            raise ValueError("Identitas kendaraan dan kapal harus diisi")
+        if type(self.x) is not int or type(self.y) is not int:
+            raise ValueError("Koordinat harus bilangan bulat")
+        if self.orientation not in ("horizontal", "vertical"):
+            raise ValueError("Orientasi harus horizontal atau vertical")
+
+    def occupied_size(self, vehicle_width: int, vehicle_length: int):
+        """Ukuran berubah ketika kendaraan diputar menjadi vertical"""
         if self.orientation == "vertical":
-            return (vehicle_length, vehicle_width)
-        return (vehicle_width, vehicle_length)
+            return vehicle_length, vehicle_width
+        return vehicle_width, vehicle_length
 
-    # TODO Tahap 1 Anggota 1, bikin helper occupied_cells buat petak grid yang kepakai
+    def occupied_cells(self, vehicle: Vehicle):
+        """Daftar koordinat sel yang ditutupi kendaraan, termasuk di luar geladak"""
+        width, length = self.occupied_size(vehicle.width, vehicle.length)
+        return {(x, y) for x in range(self.x, self.x + width)
+                for y in range(self.y, self.y + length)}

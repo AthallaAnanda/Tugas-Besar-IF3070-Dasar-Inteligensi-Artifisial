@@ -1,28 +1,20 @@
-"""Cerita soal nilai solusi, alias seberapa bagus satu State.
+"""Nilai solusi dihitung dari kendaraan yang berhasil diangkut"""
 
-objective_1 itu yang utama, kita kejar total ShippingFee sebesar mungkin.
-objective_2 itu cadangan buat bonus, dikerjakan santai setelah yang wajib beres.
-
-Cara pakainya sama, tinggal panggil fungsinya dengan satu State,
-nanti keluar angkanya. Algoritma tinggal terima fungsinya sebagai parameter.
-"""
-
+from .constraint import is_valid
 from .state import State
 
 
 def objective_1(state: State):
-    """Hitung total ShippingFee dari kendaraan yang berhasil diangkut. Makin besar makin bagus."""
-    # TODO Tahap 1 Anggota 1, jumlahkan shipping_fee dari placement yang valid ya
-    raise NotImplementedError
+    """Jumlahkan ShippingFee semua kendaraan di kapal yang memenuhi aturan"""
+    if not is_valid(state):
+        raise ValueError("Nilai objective tidak bisa dihitung untuk state tidak valid")
+    return sum(state.vehicles[placement.vehicle_id].shipping_fee
+               for ship in state.ships for placement in ship.placements)
 
 
 def objective_2(state: State):
-    """Objective cadangan buat bonus. Ingat ya, jangan nambah variabel di luar spek."""
-    # TODO Tahap Bonus Anggota 3, definisikan setelah yang wajib stabil dulu
+    """Objective alternatif disiapkan untuk tahap bonus"""
     raise NotImplementedError
 
 
-OBJECTIVES = {
-    "objective_1": objective_1,
-    "objective_2": objective_2,
-}
+OBJECTIVES = {"objective_1": objective_1, "objective_2": objective_2}

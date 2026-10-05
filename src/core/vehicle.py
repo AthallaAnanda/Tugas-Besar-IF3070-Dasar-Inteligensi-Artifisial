@@ -1,21 +1,23 @@
-"""Cerita soal kendaraan yang mau kita muat ke kapal.
-
-Isinya data dasar kendaraan, contohnya identitas, ukuran,
-kapasitas, sama nilai ShippingFee nya. Datanya nanti
-disesuaikan lagi sama spek tubes dan file data aslinya.
-"""
+"""Data kendaraan yang tersedia untuk dimuat ke kapal"""
 
 from dataclasses import dataclass
 
 
-@dataclass
+@dataclass(frozen=True)
 class Vehicle:
-    """Info statis satu kendaraan, dibaca dari data input."""
+    """Ukuran disini memakai satuan sel grid, sedangkan berat memakai satuan kapasitas kapal"""
 
     id: str
-    width: float
-    length: float
-    capacity: float = 0.0
-    shipping_fee: float = 0.0
+    width: int
+    length: int
+    shipping_fee: float
+    weight: float
+    eta: int
 
-    # TODO Tahap 1 Anggota 1, tolong sesuaikan field ini sama spek tubes dan data aslinya ya
+    def __post_init__(self):
+        if not self.id or type(self.width) is not int or type(self.length) is not int:
+            raise ValueError("Identitas dan ukuran kendaraan harus valid")
+        if self.width <= 0 or self.length <= 0:
+            raise ValueError("Ukuran kendaraan harus positif")
+        if self.weight < 0 or self.shipping_fee < 0 or type(self.eta) is not int or self.eta < 0:
+            raise ValueError("Berat, tarif, dan ETA kendaraan tidak boleh negatif")

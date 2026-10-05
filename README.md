@@ -26,6 +26,9 @@ python -m src.app
 
 Buka `frontend/index.html` di browser untuk GUI dasar.
 
+Contoh data ada di `data/sample/small.json`. Struktur State dan cara memakai
+problem core dijelaskan di `docs/architecture.md`.
+
 ## Kontrak Antarmuka
 
 Buat jaga-jaga biar kerja paralel tetap nyambung, kita sepakat begini.
