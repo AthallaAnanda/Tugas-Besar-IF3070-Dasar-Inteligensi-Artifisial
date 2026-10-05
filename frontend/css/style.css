@@ -1,0 +1,7 @@
+/* Halo, ini style dasar buat Tahap 0. */
+/* Maaf tampilannya masih sederhana, nanti Anggota 3 percantik di Tahap 4. */
+/* Di sini ada style buat badan halaman, header, dan kotak visualisasi kapal. */
+body { font-family: sans-serif; margin: 0; padding: 0 1rem; }
+header { border-bottom: 1px solid #ccc; }
+main { display: grid; gap: 1rem; max-width: 900px; }
+.ship-viz { border: 1px dashed #888; min-height: 200px; display: grid; place-items: center; }

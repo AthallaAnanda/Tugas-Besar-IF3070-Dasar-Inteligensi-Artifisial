@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Output eksperimen (hasil run, bukan skeleton)
+output/results/*.json
+output/plots/*.png
+!output/results/.gitkeep
+!output/plots/.gitkeep
+
+# Data lokal besar
+data/input/*
+!data/input/.gitkeep
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

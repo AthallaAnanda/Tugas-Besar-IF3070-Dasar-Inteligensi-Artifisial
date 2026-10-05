@@ -1,0 +1,5 @@
+# Halo, ini daftar library yang kita butuhkan.
+flask>=3.0
+flask-cors>=4.0
+pytest>=8.0
+# TODO Tahap 4, tambah matplotlib atau lib plotting lain kalau nanti butuh buat output plots ya
