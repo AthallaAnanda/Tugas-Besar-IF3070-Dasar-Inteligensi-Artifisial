@@ -8,7 +8,7 @@ from src.core.state import State
 from src.core.vehicle import Vehicle
 
 
-def test_swap_move_rotate_and_move_outside_without_mutating_source():
+def test_swap_move_rotate_and_load_outside_without_mutating_source():
     vehicles = [Vehicle("A", 2, 1, 10, 1, 0), Vehicle("B", 1, 1, 20, 1, 0),
                 Vehicle("C", 1, 1, 30, 1, 0)]
     state = State([ShipState(Ship("s", 4, 3, 3), [
@@ -18,8 +18,13 @@ def test_swap_move_rotate_and_move_outside_without_mutating_source():
     assert neighbors and all(is_valid(candidate) for candidate in neighbors)
     assert all(candidate is not state for candidate in neighbors)
     assert len({tuple(sorted(str(p) for p in c.ships[0].placements)) for c in neighbors}) == len(neighbors)
+    assert any({p.vehicle_id for p in c.ships[0].placements} == {"A", "B", "C"}
+               for c in neighbors)
     assert any({p.vehicle_id for p in c.ships[0].placements} == {"A", "C"} for c in neighbors)
-    assert any({p.vehicle_id for p in c.ships[0].placements} == {"A"} for c in neighbors)
+    assert any({p.vehicle_id for p in c.ships[0].placements} == {"A", "B"}
+               and next(p for p in c.ships[0].placements if p.vehicle_id == "A").x == 2
+               for c in neighbors)
+    assert all(len(c.ships[0].placements) >= 2 for c in neighbors)
     assert any(any(p.vehicle_id == "A" and p.orientation == "vertical"
                    for p in c.ships[0].placements) for c in neighbors)
     assert any(any(p.vehicle_id == "A" and p.x == 1

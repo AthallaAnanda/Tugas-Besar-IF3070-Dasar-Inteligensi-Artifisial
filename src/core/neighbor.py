@@ -48,13 +48,8 @@ def generate_neighbors(state: State):
             if unique(candidate):
                 yield candidate
 
-    # Kendaraan di dalam boleh digeser, keluar kapal, atau berubah orientasi
+    # Perubahan orientasi tidak mengubah posisi kendaraan.
     for ship_index, index, placement in loaded:
-        candidate = state.copy()
-        candidate.ships[ship_index].placements.pop(index)
-        if unique(candidate):
-            yield candidate
-
         candidate = state.copy()
         candidate.ships[ship_index].placements[index] = replace(
             placement, orientation="vertical" if placement.orientation == "horizontal" else "horizontal"
