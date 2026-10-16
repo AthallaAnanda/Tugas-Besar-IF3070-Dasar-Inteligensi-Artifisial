@@ -4,15 +4,36 @@ import time
 from src.core.constraint import is_valid
 from src.core.neighbor import generate_neighbors
 
-def genes(state):
-    result = {}
+def select_parent(population, fitness_scores, rng):
+    if not population or len(population) != len(fitness_scores):
+        raise ValueError("population and fitness_scores harus memiliki panjang yang sama dan tidak kosong")
 
-    for item in state.ships: # consists of ships, each ship has placements
-        for placement in item.placements: # each placement is a gene
-            result[placement.vehicle_id] = placement 
+    for fitness in fitness_scores:
+        if not math.isfinite(fitness) or fitness < 0:
+            raise ValueError("fitness_scores harus berhingga dan non-negatif")
 
-    return result
+    total_fitness = sum(fitness_scores)
 
+    if not math.isfinite(total_fitness):
+        raise ValueError("total_fitness harus berhingga")
+
+    if total_fitness == 0:
+        return rng.choice(population) # if all fitness scores are zero, select randomly
+
+    spin = rng.random() * total_fitness
+    cumulative = 0.0
+    last_positive = None
+
+    for index, fitness in enumerate(fitness_scores):
+        if fitness > 0:
+            last_positive = index
+            cumulative += fitness
+            
+            if cumulative >= spin:
+                return population[index]
+            
+    return population[last_positive]
+            
 def crossover(parent_a, parent_b, rng):
     child = parent_a.copy() # copy of state from parent a
     for item in child.ships:
@@ -46,6 +67,15 @@ def crossover(parent_a, parent_b, rng):
 
     return child
 
+def genes(state):
+    result = {}
+
+    for item in state.ships: # consists of ships, each ship has placements
+        for placement in item.placements: # each placement is a gene
+            result[placement.vehicle_id] = placement 
+
+    return result
+
 def mutate(state, rng):
     selected = None
     for count, candidate in enumerate(generate_neighbors(state), start = 1): # iterate count while generating neighbors
@@ -57,11 +87,6 @@ def mutate(state, rng):
     else:
         return state.copy()
 
-def select_parent(population, scores, tour_size, rng):
-    participants = rng.sample(range(len(population)), tour_size)
-    winner = max(participants, key = lambda index: scores[index]) # take the index of the participant with the highest score
-    return population[winner]
-
 def genetic_algorithm(initial_population, objective_function, parameters = None):
     started = time.perf_counter() # function to measure the length of time taken
     p = parameters or {}
@@ -71,7 +96,6 @@ def genetic_algorithm(initial_population, objective_function, parameters = None)
     crossover_rate = float(p.get("crossover_rate", 0.8))
     mutation_rate = float(p.get("mutation_rate", 0.2))
     elitism = p.get("elitism", 1)
-    tour_size = p.get("tour_size", 2)
     rng = random.Random(p.get("seed"))
 
     if type(population_size) is not int or population_size < 2:
@@ -80,8 +104,6 @@ def genetic_algorithm(initial_population, objective_function, parameters = None)
         raise ValueError("max_iterations harus integer non-negatif") 
     if type(elitism) is not int or not 0 <= elitism < population_size:
         raise ValueError("elitism harus integer minimal 0 dan lebih kecil dari population_size")
-    if (type(tour_size) is not int or not 1 <= tour_size <= population_size):
-        raise ValueError("tour_size harus integer bernilai antara 1 dan population_size")
     if any(not math.isfinite(rate) or not 0 <= rate <= 1
            for rate in (crossover_rate, mutation_rate)):
         raise ValueError("Probabilitas harus berhingga dan bernilai antara 0 dan 1")
@@ -119,8 +141,8 @@ def genetic_algorithm(initial_population, objective_function, parameters = None)
         next_population = [population[index].copy() for index in ranked[:elitism]] # keep the best individuals based on elitism
 
         while len(next_population) < population_size: 
-            parent_a = select_parent(population, scores, tour_size, rng) # pick from the population based on tournament selection
-            parent_b = select_parent(population, scores, tour_size, rng)
+            parent_a = select_parent(population, scores, rng) # pick from the population based on tournament selection
+            parent_b = select_parent(population, scores, rng)
 
             if rng.random() < crossover_rate: # crossover with probability crossover_rate
                 child = crossover(parent_a, parent_b, rng)
