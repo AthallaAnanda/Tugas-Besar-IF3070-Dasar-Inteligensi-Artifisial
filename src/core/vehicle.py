@@ -1,6 +1,7 @@
 """Data kendaraan yang tersedia untuk dimuat ke kapal"""
 
 from dataclasses import dataclass
+from math import isfinite
 
 
 @dataclass(frozen=True)
@@ -15,9 +16,14 @@ class Vehicle:
     eta: int
 
     def __post_init__(self):
-        if not self.id or type(self.width) is not int or type(self.length) is not int:
-            raise ValueError("Identitas dan ukuran kendaraan harus valid")
+        if not isinstance(self.id, str) or not self.id:
+            raise ValueError("Identitas kendaraan harus berupa teks yang tidak kosong")
+        if type(self.width) is not int or type(self.length) is not int:
+            raise ValueError("Ukuran kendaraan harus bilangan bulat")
         if self.width <= 0 or self.length <= 0:
             raise ValueError("Ukuran kendaraan harus positif")
-        if self.weight < 0 or self.shipping_fee < 0 or type(self.eta) is not int or self.eta < 0:
-            raise ValueError("Berat, tarif, dan ETA kendaraan tidak boleh negatif")
+        if any(type(value) not in (int, float) or not isfinite(value) or value < 0
+               for value in (self.weight, self.shipping_fee)):
+            raise ValueError("Berat dan tarif kendaraan harus bilangan tidak negatif yang terbatas")
+        if type(self.eta) is not int or self.eta < 0:
+            raise ValueError("ETA kendaraan harus bilangan bulat tidak negatif")

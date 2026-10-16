@@ -39,13 +39,17 @@ neighbors = generate_neighbors(initial_state)
 ```
 
 `generate_neighbors` memberi state baru yang valid lewat operasi tukar,
-pindah, dan putar. State asal tidak berubah. `random_neighbor` memilih satu
+pindah ke koordinat lain, dan putar. Kendaraan di luar dapat ditukar dengan
+kendaraan di kapal atau dipindahkan ke suatu koordinat di geladak. Mengeluarkan
+kendaraan tanpa pertukaran bukan satu langkah neighbor. State asal tidak berubah.
+`random_neighbor` memilih satu
 dari hasil tersebut dan menerima generator angka acak opsional untuk eksperimen.
 `State.copy()` membuat salinan yang dapat diubah secara mandiri.
 
 `State.from_dict(data)` menerima `vehicles` dan `ships`. Setiap kapal bisa
 langsung ditulis dengan atribut kapal, atau memakai objek `ship` beserta
-`placements`. `load_problem(path)` membaca format ini dari JSON. Fungsi
+`placements`. Kedua bentuk menerima `placements` sebagai daftar opsional.
+`load_problem(path)` membaca format ini dari JSON. Fungsi
 `create_initial_state(ships, vehicles, seed)` membuat penempatan awal acak;
 kendaraan yang tidak berhasil ditempatkan tetap berada di luar.
 
@@ -59,5 +63,6 @@ kendaraan di luar, dan nilai untuk API atau visualisasi.
 
 Algoritma menerima State, fungsi objective, pembuat neighbor, dan parameter.
 Hasilnya disepakati berisi `best_state`, `best_value`, `history`, `iterations`,
-dan `duration`. Implementasi algoritma serta integrasi service merupakan tahap
-berikutnya.
+dan `duration`. Steepest Ascent juga menyertakan `initial_state` dan
+`final_state`; keduanya berupa objek `State`, dan `final_state` adalah solusi
+terbaik. Integrasi service merupakan tahap berikutnya.

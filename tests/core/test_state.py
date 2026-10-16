@@ -62,3 +62,29 @@ def test_from_dict_rejects_invalid_placement():
             "ships": [{"ship": vars(Ship("s", 2, 2, 2)),
                        "placements": [vars(Placement("A", "s", 1, 1))]}],
         })
+
+
+def test_from_dict_accepts_both_ship_shapes_with_placements():
+    vehicle = vars(Vehicle("A", 1, 1, 10, 1, 0))
+    ship = vars(Ship("s", 2, 1, 1))
+    placement = vars(Placement("A", "s", 1, 0))
+    direct = State.from_dict({
+        "vehicles": [vehicle],
+        "ships": [{**ship, "placements": [placement]}],
+    })
+    nested = State.from_dict({
+        "vehicles": [vehicle],
+        "ships": [{"ship": ship, "placements": [placement]}],
+    })
+    assert direct.to_dict() == nested.to_dict()
+    assert direct.deck_grid("s") == [[None, "A"]]
+    assert direct.outside_vehicle_ids == set()
+
+
+def test_numeric_fields_reject_non_finite_values():
+    with pytest.raises(ValueError):
+        Vehicle("A", 1, 1, float("nan"), 1, 0)
+    with pytest.raises(ValueError):
+        Vehicle("A", 1, 1, 1, float("inf"), 0)
+    with pytest.raises(ValueError):
+        Ship("s", 1, 1, float("nan"))
