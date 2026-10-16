@@ -49,6 +49,9 @@ def simulated_annealing(initial_state, objective_function, neighbor_generator, p
     history = [current_value]
     best_history = [best_value]
     temperature_history = [temperature]
+    e_deltaet_history = []
+    log_e_deltaet_history = []
+
     iterations = 0
     stuck_count = 0
     accept_worse = 0
@@ -61,11 +64,22 @@ def simulated_annealing(initial_state, objective_function, neighbor_generator, p
 
         if not has_improvement:
             stuck_count += 1
+
         if candidate is None:
             break
 
         delta = candidate_value - current_value # delta E
-        accepted = (delta >= 0 or rng.random() < math.exp(delta / temperature))
+        exponent = delta / temperature # delta E / T
+
+        try:
+            e_deltaet = math.exp(exponent) # e^(delta E / T)
+        except OverflowError:
+            e_deltaet = float("inf") if exponent > 0 else 0.0
+
+        e_deltaet_history.append(e_deltaet)
+        log_e_deltaet_history.append(exponent)
+
+        accepted = (delta >= 0 or rng.random() < e_deltaet)
 
         if accepted: # fulfilling rules either better value or worse value with probability
             if delta < 0:
@@ -94,6 +108,8 @@ def simulated_annealing(initial_state, objective_function, neighbor_generator, p
         "history": history,
         "best_history": best_history,
         "temperature_history": temperature_history,
+        "e_deltaet_history": e_deltaet_history,
+        "log_e_deltaet_history": log_e_deltaet_history,
         "iterations": iterations,
         "duration": time.perf_counter() - started,
         "stuck_count": stuck_count,
