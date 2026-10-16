@@ -66,9 +66,13 @@ class State:
     def from_dict(cls, data):
         """Baca definisi masalah beserta placement awal bila disediakan"""
         vehicles = [Vehicle(**vehicle) for vehicle in data["vehicles"]]
-        ships = [ShipState(Ship(**item.get("ship", item)), [
-            Placement(**placement) for placement in item.get("placements", [])
-        ]) for item in data["ships"]]
+        ships = []
+        for item in data["ships"]:
+            ship_data = item["ship"] if "ship" in item else {
+                key: value for key, value in item.items() if key != "placements"
+            }
+            placements = [Placement(**placement) for placement in item.get("placements", [])]
+            ships.append(ShipState(Ship(**ship_data), placements))
         if len({vehicle.id for vehicle in vehicles}) != len(vehicles):
             raise ValueError("Identitas kendaraan harus unik")
         if len({item.ship.id for item in ships}) != len(ships):
