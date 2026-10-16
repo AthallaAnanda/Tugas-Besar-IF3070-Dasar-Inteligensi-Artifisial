@@ -42,7 +42,8 @@ problem core dijelaskan di `docs/architecture.md`.
 - Anggota 2: Simulated Annealing dan Genetic Algorithm.
 - Anggota 3: layanan optimasi, eksperimen, API, dan frontend.
 
-Steepest Ascent adalah algoritma wajib yang sudah tersedia pada bagian Anggota
-1. Varian Hill Climbing lain merupakan bonus setelah seluruh bagian wajib
-proyek selesai dan teruji. Endpoint optimasi dan eksperimen, Simulated
-Annealing, serta Genetic Algorithm masih menunggu implementasi anggota terkait.
+Steepest Ascent dan Simulated Annealing sudah tersedia di branch integrasi
+`develop`. Cara pemakaian dan hasil keduanya dijelaskan di `docs/algorithm.md`.
+Varian Hill Climbing lain merupakan bonus setelah seluruh bagian wajib proyek
+selesai dan teruji. Endpoint optimasi dan eksperimen serta Genetic Algorithm
+masih menunggu implementasi anggota terkait.
