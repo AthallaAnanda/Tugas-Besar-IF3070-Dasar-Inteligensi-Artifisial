@@ -1,19 +1,55 @@
-"""Random Restart Hill Climbing, si pantang menyerah.
+"""Random Restart menjalankan Steepest Ascent dari state awal yang baru."""
 
-Idenya sederhana, kalau mentok ya ulangi lagi dari awal yang baru.
-Diulang beberapa kali sesuai maximum_restart, lalu ambil yang paling bagus.
+from time import perf_counter
 
-Yang dicatat ada jumlah restart, iterasi tiap restart, total iterasi,
-nilai terbaik, sama durasi.
-"""
-
-import time
+from ._common import build_result, validate_limit
+from .steepest import steepest_ascent
 
 
 def random_restart(initial_state_fn, objective_function, neighbor_generator, parameters=None):
-    """Jalankan random restart.
+    """Ulangi Steepest Ascent sampai batas restart tercapai.
 
-    initial_state_fn itu fungsi yang tiap dipanggil bikin State awal baru.
+    `maximum_restart` menghitung pengulangan setelah pencarian awal. Fungsi
+    `initial_state_fn` dipanggil sekali untuk pencarian awal dan sekali lagi
+    untuk setiap restart.
     """
-    # TODO Tahap 2 Bonus Anggota 1, implementasi sesuai bagian 10.4 ya
-    raise NotImplementedError
+    parameters = {} if parameters is None else parameters
+    maximum_restart = validate_limit(parameters, "maximum_restart", 10, minimum=0)
+    max_iterations = validate_limit(parameters, "max_iterations", 1000)
+    if not callable(initial_state_fn):
+        raise ValueError("initial_state_fn harus berupa fungsi")
+
+    started = perf_counter()
+    first_state = initial_state_fn()
+    initial_snapshot = first_state.copy()
+    best_state = None
+    best_value = None
+    history = []
+    history_per_restart = []
+    iterations_per_restart = []
+    total_iterations = 0
+
+    for run_index in range(maximum_restart + 1):
+        start_state = first_state if run_index == 0 else initial_state_fn()
+        result = steepest_ascent(
+            start_state, objective_function, neighbor_generator,
+            {"max_iterations": max_iterations},
+        )
+        iterations_per_restart.append(result["iterations"])
+        history_per_restart.append(result["history"])
+        total_iterations += result["iterations"]
+
+        if best_value is None or result["best_value"] > best_value:
+            best_state = result["best_state"]
+            best_value = result["best_value"]
+
+        if not history:
+            history.append(objective_function(initial_snapshot))
+        history.extend(max(history[-1], value) for value in result["history"][1:])
+
+    return build_result(
+        initial_snapshot, best_state, best_value, history, total_iterations,
+        perf_counter() - started, restarts=len(iterations_per_restart) - 1,
+        iterations_per_restart=iterations_per_restart,
+        history_per_restart=history_per_restart,
+    )
