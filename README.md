@@ -30,11 +30,14 @@ problem core dijelaskan di `docs/architecture.md`.
 - State dipakai bareng sama semua algoritma, tidak bikin sendiri sendiri.
 - Fungsi objective dipanggil dengan satu State, keluarnya angka nilai.
 - Pembikin neighbor dipanggil dengan satu State, keluarnya daftar tetangga.
-- Steepest Ascent menerima State awal, fungsi objective, generator neighbor,
-  dan parameter `max_iterations` (bawaan 1000).
-- Result Steepest Ascent berisi initial_state, final_state, best_state,
+- Semua varian Hill Climbing menerima State awal, fungsi objective, dan
+  generator neighbor. Batas iterasi memakai parameter `max_iterations`
+  (bawaan 1000).
+- Result algoritma berisi initial_state, final_state, best_state,
   best_value, history, iterations, duration. State dalam result masih objek
   Python; gunakan `State.to_dict()` saat menyajikannya sebagai JSON.
+- Sideways Move juga mencatat `sideways_moves`. Random Restart mencatat
+  `restarts` dan `iterations_per_restart`.
 
 ## Pembagian Tugas
 
@@ -42,7 +45,7 @@ problem core dijelaskan di `docs/architecture.md`.
 - Anggota 2: Simulated Annealing dan Genetic Algorithm.
 - Anggota 3: layanan optimasi, eksperimen, API, dan frontend.
 
-Steepest Ascent adalah algoritma wajib yang sudah tersedia pada bagian Anggota
-1. Varian Hill Climbing lain merupakan bonus setelah seluruh bagian wajib
-proyek selesai dan teruji. Endpoint optimasi dan eksperimen, Simulated
-Annealing, serta Genetic Algorithm masih menunggu implementasi anggota terkait.
+Steepest Ascent adalah algoritma wajib Anggota 1. Stochastic, Sideways Move,
+dan Random Restart sudah tersedia sebagai varian bonus. Endpoint optimasi dan
+eksperimen, Simulated Annealing, serta Genetic Algorithm masih menunggu
+implementasi anggota terkait.

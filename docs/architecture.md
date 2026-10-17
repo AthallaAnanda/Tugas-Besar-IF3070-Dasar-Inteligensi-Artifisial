@@ -42,8 +42,12 @@ neighbors = generate_neighbors(initial_state)
 pindah ke koordinat lain, dan putar. Kendaraan di luar dapat ditukar dengan
 kendaraan di kapal atau dipindahkan ke suatu koordinat di geladak. Mengeluarkan
 kendaraan tanpa pertukaran bukan satu langkah neighbor. State asal tidak berubah.
-`random_neighbor` memilih satu
-dari hasil tersebut dan menerima generator angka acak opsional untuk eksperimen.
+`random_neighbor` mengacak usulan tukar, pindah, dan putar, lalu berhenti pada
+state valid pertama. Fungsi ini tidak memanggil `generate_neighbors` dan tidak
+perlu membuat semua state tetangga. Generator angka acak opsional diterima
+untuk eksperimen. Jika tidak ada neighbor, fungsi melempar `NoNeighborError`,
+yang merupakan turunan `ValueError`. State awal tidak valid tetap ditolak
+dengan `ValueError`.
 `State.copy()` membuat salinan yang dapat diubah secara mandiri.
 
 `State.from_dict(data)` menerima `vehicles` dan `ships`. Setiap kapal bisa
