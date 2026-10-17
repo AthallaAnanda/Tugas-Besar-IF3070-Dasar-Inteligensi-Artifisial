@@ -1,7 +1,495 @@
-/* Halo, ini style dasar buat Tahap 0. */
-/* Maaf tampilannya masih sederhana, nanti Anggota 3 percantik di Tahap 4. */
-/* Di sini ada style buat badan halaman, header, dan kotak visualisasi kapal. */
-body { font-family: sans-serif; margin: 0; padding: 0 1rem; }
-header { border-bottom: 1px solid #ccc; }
-main { display: grid; gap: 1rem; max-width: 900px; }
-.ship-viz { border: 1px dashed #888; min-height: 200px; display: grid; place-items: center; }
+:root {
+  font-family: Inter, system-ui, sans-serif;
+  color: #173047;
+  background: #f1f5f8;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+button {
+  padding: 10px 16px;
+  background: white;
+  color: #173047;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #eaf1f7;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.primary {
+  background: #126c8c;
+  color: white;
+  border-color: #126c8c;
+}
+
+.primary:hover {
+  background: #0c566f;
+}
+
+.page-header,
+main {
+  max-width: 1280px;
+  margin: auto;
+  padding: 24px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 0;
+}
+
+.page-header p {
+  margin: 0;
+}
+
+.page-header .eyebrow {
+  margin-bottom: 8px;
+}
+
+h1,
+h2,
+h3 {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 8px;
+}
+
+.eyebrow {
+  color: #126c8c;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.badge {
+  background: #e0f2ee;
+  color: #176857;
+  padding: 10px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.panel {
+  background: white;
+  border: 1px solid #dae3eb;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+legend {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+input,
+select,
+textarea {
+  background: white;
+  color: #173047;
+  padding: 10px 12px;
+  min-width: 0;
+  width: 100%;
+}
+
+textarea {
+  resize: vertical;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.toolbar,
+.section-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.section-heading {
+  justify-content: space-between;
+}
+
+.section-heading h2,
+.section-heading h3 {
+  margin: 0;
+}
+
+.toolbar label {
+  margin: 0;
+}
+
+.replay-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 18px;
+}
+
+.replay-toolbar .speed-control {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.speed-control select {
+  width: auto;
+  min-width: 120px;
+  height: 44px;
+}
+
+.checkbox-label {
+  flex-direction: row;
+  align-items: center;
+}
+
+.checkbox-label input {
+  width: auto;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.metric {
+  background: white;
+  border: 1px solid #dae3eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.metric strong {
+  display: block;
+  font-size: 1.7rem;
+  margin-top: 8px;
+}
+
+.comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.ship-card + .ship-card {
+  margin-top: 24px;
+}
+
+.deck {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  background: #eff7fb;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.vehicle-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.vehicle-tag {
+  background: #eef2f6;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+
+#chart {
+  width: 100%;
+  height: 280px;
+  display: block;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 24px;
+  font-size: 0.9rem;
+}
+
+.current-color {
+  color: #126c8c;
+}
+
+.best-color {
+  color: #d97706;
+}
+
+#message {
+  min-height: 24px;
+}
+
+#message.error {
+  color: #b42318;
+}
+
+#message:empty {
+  display: none;
+}
+
+#result-section {
+  scroll-margin-top: 24px;
+}
+
+#result-status {
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border-left: 4px solid #176857;
+  border-radius: 8px;
+  background: #e0f2ee;
+  color: #176857;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+:focus-visible {
+  outline: 3px solid #38a5ce;
+  outline-offset: 3px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .form-grid,
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .comparison {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 540px) {
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .page-header,
+  main {
+    padding: 16px;
+  }
+
+  .page-header {
+    padding-bottom: 0;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .form-grid,
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .replay-toolbar .speed-control {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+.data-toolbar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.data-toolbar #sample-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.data-toolbar .file-label {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  gap: 8px;
+}
+
+.data-toolbar input[type="file"] {
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 0;
+  overflow: hidden;
+  font-size: 0.9rem;
+  font-weight: 400;
+  line-height: 42px;
+  cursor: pointer;
+}
+
+.data-toolbar input[type="file"]::file-selector-button {
+  height: 100%;
+  margin: 0 12px 0 0;
+  padding: 0 16px;
+  border: 0;
+  border-right: 1px solid #cbd5e1;
+  background: #edf4f8;
+  color: #173047;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.data-toolbar input[type="file"]:hover::file-selector-button {
+  background: #dfeef5;
+}
+
+@media (max-width: 540px) {
+  .data-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .data-toolbar #sample-button,
+  .data-toolbar .file-label {
+    width: 100%;
+  }
+}
+
+.trace-options {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+}
+
+.trace-options > label {
+  margin-bottom: 0;
+}
+
+.trace-options .checkbox-label {
+  min-height: 44px;
+  margin-bottom: 0;
+}
+
+.action-toolbar {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.8fr) minmax(0, 1.2fr);
+  align-items: stretch;
+  gap: 12px;
+}
+
+.action-toolbar button {
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+}
+
+.action-toolbar #experiment-button small {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+@media (max-width: 540px) {
+  .trace-options,
+  .action-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+.trace-options {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.trace-options .checkbox-label {
+  min-height: 44px;
+  margin: 0;
+}

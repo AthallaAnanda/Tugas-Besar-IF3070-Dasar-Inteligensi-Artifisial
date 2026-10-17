@@ -1,17 +1,59 @@
-"""Experiment Service, si tukang lembur.
-
-Kalau optimization itu sekali jalan, yang ini jalannya berkali kali
-buat kebutuhan eksperimen. Dia yang atur pengulangan, atur parameter,
-kumpulkan hasil, hitung metrik, simpan, dan siapkan data buat grafik.
-
-Buat non GA kita ulang 3 kali. Buat GA ada Skenario A dan B,
-tiap config diulang 3 kali juga.
-"""
-
-from .optimization import run_optimization
+from src.experiments.metrics import summarize
+from src.services.optimization import read_seed, run_optimization
 
 
 def run_experiment(config):
-    """Jalankan eksperimen sesuai file src/experiments/config.py."""
-    # TODO Tahap 3 Anggota 3
-    raise NotImplementedError
+    if not isinstance(config, dict):
+        raise ValueError("Konfigurasi eksperimen harus berupa object")
+
+    problem = config.get("problem")
+    configurations = config.get("configurations")
+    runs = config.get("runs", 3)
+    base_seed = read_seed(config.get("seed"), "seed")
+
+    if type(runs) is not int or runs < 1:
+        raise ValueError("runs harus bilangan bulat positif")
+
+    if not isinstance(configurations, list) or not configurations:
+        raise ValueError("configurations harus berupa daftar yang tidak kosong")
+
+    if any(not isinstance(item, dict) for item in configurations):
+        raise ValueError("Setiap konfigurasi harus berupa object")
+
+    results = []
+    summaries = []
+
+    for index, configuration in enumerate(configurations):
+        group = []
+
+        for run in range(runs):
+            request = {
+                **configuration,
+                "problem": problem,
+                "seed": base_seed + run,
+                "algorithm_seed": base_seed + 100000 + run,
+                "record_steps": False,
+            }
+
+            result = run_optimization(request)
+            group.append(result)
+
+            results.append({
+                "configuration_index": index,
+                "run": run + 1,
+                "result": result,
+            })
+
+        summaries.append({
+            "configuration_index": index,
+            "configuration": group[0]["configuration"],
+            **summarize(group),
+        })
+
+    return {
+        "status": "success",
+        "base_seed": base_seed,
+        "runs_per_configuration": runs,
+        "summaries": summaries,
+        "results": results,
+    }
