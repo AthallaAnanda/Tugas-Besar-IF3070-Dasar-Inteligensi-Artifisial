@@ -1,22 +1,159 @@
-"""Genetic Algorithm, si main keroyokan.
-
-Dia tidak jalan sendirian, tapi bawa satu populasi solusi.
-Tiap generasi ada seleksi, kawin silang, mutasi, plus elitisme
-biar yang terbaik tidak hilang. Lalu dibentuk generasi baru.
-
-Penting, tiap individu di populasi harus tetap bisa dibaca sebagai State yang valid.
-"""
-
+import math
+import random
 import time
+from src.core.constraint import is_valid
+from src.core.neighbor import generate_neighbors
 
+def genes(state):
+    result = {}
 
-def genetic_algorithm(initial_population_fn, objective_function, parameters=None):
-    """Jalankan genetic algorithm.
+    for item in state.ships: # consists of ships, each ship has placements
+        for placement in item.placements: # each placement is a gene
+            result[placement.vehicle_id] = placement 
 
-    initial_population_fn itu fungsi yang bikin daftar State awal.
-    Contoh parameters ada population_size, max_iterations,
-    crossover_rate, mutation_rate, sama elitism.
-    Hasilnya paket result standar plus info max dan rata rata populasi.
-    """
-    # TODO Tahap 2 Anggota 2, implementasi sesuai bagian 12 plus eksperimen 13.2 ya
-    raise NotImplementedError
+    return result
+
+def crossover(parent_a, parent_b, rng):
+    child = parent_a.copy() # copy of state from parent a
+    for item in child.ships:
+        item.placements.clear()
+
+    genes_a = genes(parent_a) # dictionary of vehicle_id to placement for parent a
+    genes_b = genes(parent_b)
+    
+    ships = {}
+    for item in child.ships:
+        ships[item.ship.id] = item 
+
+    vehicle_ids = sorted(child.vehicles) # list of vehicle ids in child state
+    rng.shuffle(vehicle_ids)
+
+    for vehicle_id in vehicle_ids:
+        if rng.random() < 0.5: 
+            source = genes_a # choose parent's gene with 50% probability
+        else:
+            source = genes_b
+        
+        placement = source.get(vehicle_id)
+        if placement is None:
+            continue # condition when the vehicle_id is outside the ship
+
+        target = ships[placement.ship_id]
+        target.placements.append(placement)
+
+        if not is_valid(child):
+            target.placements.pop() # erase the placement if it makes the child invalid
+
+    return child
+
+def mutate(state, rng):
+    selected = None
+    for count, candidate in enumerate(generate_neighbors(state), start = 1): # iterate count while generating neighbors
+        if rng.randrange(count) == 0: # randomly select a neighbor with uniform probability
+            selected = candidate.copy()
+
+    if selected:
+        return selected
+    else:
+        return state.copy()
+
+def select_parent(population, scores, tour_size, rng):
+    participants = rng.sample(range(len(population)), tour_size)
+    winner = max(participants, key = lambda index: scores[index]) # take the index of the participant with the highest score
+    return population[winner]
+
+def genetic_algorithm(initial_population, objective_function, parameters = None):
+    started = time.perf_counter() # function to measure the length of time taken
+    p = parameters or {}
+
+    population_size = p.get("population_size", 50)
+    max_iterations = p.get("max_iterations", 100)
+    crossover_rate = float(p.get("crossover_rate", 0.8))
+    mutation_rate = float(p.get("mutation_rate", 0.2))
+    elitism = p.get("elitism", 1)
+    tour_size = p.get("tour_size", 2)
+    rng = random.Random(p.get("seed"))
+
+    if type(population_size) is not int or population_size < 2:
+        raise ValueError("population_size minimal bernilai 2") # need minimum of 2 population to select parents
+    if type(max_iterations) is not int or max_iterations < 0:
+        raise ValueError("max_iterations harus integer non-negatif") 
+    if type(elitism) is not int or not 0 <= elitism < population_size:
+        raise ValueError("elitism harus integer minimal 0 dan lebih kecil dari population_size")
+    if (type(tour_size) is not int or not 1 <= tour_size <= population_size):
+        raise ValueError("tour_size harus integer bernilai antara 1 dan population_size")
+    if any(not math.isfinite(rate) or not 0 <= rate <= 1
+           for rate in (crossover_rate, mutation_rate)):
+        raise ValueError("Probabilitas harus berhingga dan bernilai antara 0 dan 1")
+
+    population = [state.copy() for state in initial_population()] # copy the initial population to avoid mutation of the original states
+    if len(population) != population_size:
+        raise ValueError("Jumlah state awal harus sama dengan population_size")
+    if not all(is_valid(state) for state in population):
+        raise ValueError("Semua state awal harus valid")
+
+    reference = population[0] # first state as reference
+    reference_ships = {} 
+    for item in reference.ships:
+        reference_ships[item.ship.id] = item.ship # define a dictionary of ship id of first state
+        
+    for state in population:
+        ships = {}
+        for item in state.ships:
+            ships[item.ship.id] = item.ship # define a dictionary of ship id for each state
+        if state.vehicles != reference.vehicles or ships != reference_ships:
+            raise ValueError("Semua individu harus memakai acuan yang sama")
+
+    scores = [objective_function(state) for state in population] # calculate the objective function for each state 
+    best_index = max(range(population_size), key = lambda i: scores[i])
+    best = population[best_index].copy()
+    best_value = scores[best_index]
+    initial_best = best.copy()
+
+    history = [max(scores)]
+    mean_history = [sum(scores) / population_size]
+    best_history = [best_value]
+
+    for iteration in range(max_iterations):
+        ranked = sorted(range(population_size), key = lambda i: scores[i], reverse = True) # sort the indices of the population based on their scores (descending)
+        next_population = [population[index].copy() for index in ranked[:elitism]] # keep the best individuals based on elitism
+
+        while len(next_population) < population_size: 
+            parent_a = select_parent(population, scores, tour_size, rng) # pick from the population based on tournament selection
+            parent_b = select_parent(population, scores, tour_size, rng)
+
+            if rng.random() < crossover_rate: # crossover with probability crossover_rate
+                child = crossover(parent_a, parent_b, rng)
+            else:
+                child = parent_a.copy() 
+
+            if rng.random() < mutation_rate: # mutate with probability mutation_rate
+                child = mutate(child, rng)
+
+            next_population.append(child) # add the child to the next population
+
+        population = next_population
+        scores = [objective_function(state) for state in population]
+        best_index = max(range(population_size), key = lambda i: scores[i]) # find the index of the best individual
+
+        if scores[best_index] > best_value:
+            best = population[best_index].copy()
+            best_value = scores[best_index]
+
+        history.append(max(scores))
+        mean_history.append(sum(scores) / population_size)
+        best_history.append(best_value)
+
+    return {
+        "initial_state": initial_best,
+        "best_state": best.copy(),
+        "best_value": best_value,
+        "final_state": best.copy(),
+        "final_value": best_value,
+        "history": history,
+        "mean_history": mean_history,
+        "best_history": best_history,
+        "population_size": population_size,
+        "iterations": max_iterations,
+        "duration": time.perf_counter() - started,
+    }

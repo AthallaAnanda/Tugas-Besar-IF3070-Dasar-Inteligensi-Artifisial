@@ -70,6 +70,9 @@ def simulated_annealing(
     history = [current_value]
     best_history = [best_value]
     temperature_history = [temperature]
+    # A4: nambahin history eksponen dari branch teman, isinya dicatet per kandidat jadi ga punya data iterasi nol
+    e_deltaet_history = []
+    log_e_deltaet_history = []
 
     iterations = 0
     stuck_count = 0
@@ -110,9 +113,20 @@ def simulated_annealing(
 
         used_temperature = temperature # nyimpen temperatur yang dipake buat nentuin probabilitas penerimaan solusi yang lebih buruk, dan yap biar bisa dilacak dan dicek
         delta = candidate_value - current_value
-        accepted = delta >= 0 or rng.random() < math.exp(
-            delta / used_temperature
-        )
+        # A4: pake temperatur sebelum pendinginan biar nilai eksponen sesuai sama temperatur yang dicatet buat replay
+        exponent = delta / used_temperature
+
+        # A4: pertahanin penanganan overflow dari branch teman biar eksponen besar ga bikin pencarian berhenti karena error
+        try:
+            e_deltaet = math.exp(exponent)
+        except OverflowError:
+            e_deltaet = float("inf") if exponent > 0 else 0.0
+
+        e_deltaet_history.append(e_deltaet)
+        log_e_deltaet_history.append(exponent)
+
+        # A4: hasil eksponen dipake buat penerimaan, kandidat lebih baik tetep diterima tanpa ngambil angka random tambahan
+        accepted = delta >= 0 or rng.random() < e_deltaet
 
         # ngecatet apakah pencarian berpindah ke solusi yang lebih baik, solusi yang sama, solusi yang lebih buruk, atau ditolak (cuma jadi metadata)
         if accepted:
@@ -165,6 +179,9 @@ def simulated_annealing(
         "history": history,
         "best_history": best_history,
         "temperature_history": temperature_history,
+        # A4: balikin dua history tambahan sambil tetep nyertain snapshot, callback, dan alasan berhenti yang udah ada
+        "e_deltaet_history": e_deltaet_history,
+        "log_e_deltaet_history": log_e_deltaet_history,
         "iterations": iterations,
         "duration": time.perf_counter() - started,
         "stuck_count": stuck_count,
