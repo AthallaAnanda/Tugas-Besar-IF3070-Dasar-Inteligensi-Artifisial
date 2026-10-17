@@ -10,7 +10,6 @@ from src.core.placement import Placement
 from src.core.ship import Ship, ShipState
 from src.core.state import State
 from src.core.vehicle import Vehicle
-from src.services.trace import TraceRecorder
 
 
 def state_with(vehicle_id):
@@ -23,19 +22,18 @@ def state_with(vehicle_id):
     ], vehicles)
 
 
-@pytest.mark.parametrize("source,target,temperature,decision", [
-    ("A", "B", 2.0, "improved"),
-    ("B", "A", 2.0, "rejected"),
-    ("B", "A", 1e9, "accepted_worse"),
-    ("A", "B", 0.001, "improved"),
+@pytest.mark.parametrize("source,target,temperature,expected_value", [
+    ("A", "B", 2.0, 20),
+    ("B", "A", 2.0, 20),
+    ("B", "A", 1e9, 10),
+    ("A", "B", 0.001, 20),
 ])
-def test_annealing_exponent_history_and_replay_share_decision(
-    source, target, temperature, decision
+def test_annealing_exponent_history_matches_acceptance(
+    source, target, temperature, expected_value
 ):
     initial = state_with(source)
     before = initial.to_dict()
     candidate = state_with(target)
-    recorder = TraceRecorder()
 
     def neighbors(state):
         yield candidate.copy()
@@ -48,12 +46,8 @@ def test_annealing_exponent_history_and_replay_share_decision(
         "seed": 42,
     }
     result = simulated_annealing(
-        initial, objective_1, neighbors, parameters, on_step=recorder
-    )
-    without_replay = simulated_annealing(
         initial, objective_1, neighbors, parameters
     )
-    frames = recorder.finish()
     exponent = (objective_1(candidate) - objective_1(initial)) / temperature
 
     assert result["log_e_deltaet_history"] == [exponent]
@@ -63,39 +57,28 @@ def test_annealing_exponent_history_and_replay_share_decision(
         assert result["e_deltaet_history"] == pytest.approx([math.exp(exponent)])
     assert len(result["e_deltaet_history"]) == result["iterations"] == 1
     assert len(result["log_e_deltaet_history"]) == 1
-    assert len(result["history"]) == len(frames) == 2
-    assert frames[1]["decision"] == decision
-    assert frames[1]["temperature"] == temperature
-    assert frames[1]["next_temperature"] == temperature * 0.5
-    assert frames[1]["objective_value"] == result["history"][-1]
-    assert frames[1]["best_value"] == result["best_value"]
-    assert result["stop_reason"] == "max_iterations"
+    assert len(result["history"]) == 2
+    assert result["history"][-1] == result["terminal_value"] == expected_value
+    assert result["temperature_history"] == [temperature, temperature * 0.5]
     assert initial.to_dict() == result["initial_state"].to_dict() == before
     assert is_valid(result["best_state"])
-    assert result["history"] == without_replay["history"]
-    assert result["e_deltaet_history"] == without_replay["e_deltaet_history"]
-    assert result["terminal_state"].to_dict() == without_replay["terminal_state"].to_dict()
 
 
-@pytest.mark.parametrize("parameters,reason", [
-    ({"max_iterations": 0}, "max_iterations"),
-    ({"initial_temperature": 1, "min_temperature": 1}, "min_temperature"),
-    ({}, "no_neighbors"),
+@pytest.mark.parametrize("parameters", [
+    {"max_iterations": 0},
+    {"initial_temperature": 1, "min_temperature": 1},
+    {},
 ])
-def test_annealing_does_not_record_exponent_without_candidate(parameters, reason):
-    recorder = TraceRecorder()
-
+def test_annealing_does_not_record_exponent_without_candidate(parameters):
     def no_neighbors(state):
         return iter(())
 
     result = simulated_annealing(
-        state_with("A"), objective_1, no_neighbors, parameters, on_step=recorder
+        state_with("A"), objective_1, no_neighbors, parameters
     )
     assert result["iterations"] == 0
     assert result["e_deltaet_history"] == []
     assert result["log_e_deltaet_history"] == []
-    assert result["stop_reason"] == reason
-    assert len(recorder.finish()) == 1
 
 
 def test_merged_genetic_algorithm_runs_with_shared_core_and_preserves_population():

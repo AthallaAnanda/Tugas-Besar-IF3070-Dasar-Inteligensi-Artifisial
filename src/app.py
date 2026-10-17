@@ -3,7 +3,6 @@ from pathlib import Path
 from flask import Flask, jsonify, request
 from werkzeug.exceptions import BadRequest, UnsupportedMediaType
 
-from src.experiments.runner import runner
 from src.services.optimization import capabilities, run_optimization
 
 
@@ -14,6 +13,7 @@ app = Flask(
     static_folder=str(ROOT / "frontend"),
     static_url_path="/assets",
 )
+app.json.sort_keys = False
 
 
 @app.get("/")
@@ -54,14 +54,6 @@ def request_body():
 @app.post("/api/optimize")
 def optimize():
     return jsonify(run_optimization(request_body()))
-
-
-@app.post("/api/experiment")
-def experiment():
-    return jsonify(runner(
-        request_body(),
-        output_dir=ROOT / "output/results",
-    ))
 
 
 @app.errorhandler(ValueError)

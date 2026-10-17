@@ -17,16 +17,17 @@ SAMPLE = Path(__file__).resolve().parents[2] / "data/sample/small.json"
 
 def test_sample_and_grid_keep_vehicles_outside():
     state = load_problem(SAMPLE)
-    assert len(state.vehicles) == 4
-    assert state.outside_vehicle_ids == {"A", "B", "C", "D"}
+    assert len(state.vehicles) == 25
+    assert state.outside_vehicle_ids == set("ABCDEFGHIJKLMNOPQRSTUVWXY")
+    assert (state.ships[0].ship.width, state.ships[0].ship.length, state.ships[0].ship.max_capacity) == (7, 6, 15)
     state.ships[0].placements.append(Placement("A", "ship_1", 0, 0))
     assert is_valid(state)
     assert state.deck_grid("ship_1")[0][:3] == ["A", "A", None]
-    assert state.outside_vehicle_ids == {"B", "C", "D"}
+    assert state.outside_vehicle_ids == set("BCDEFGHIJKLMNOPQRSTUVWXY")
     data = state.to_dict()
     assert data["value"] == 60
     assert data["ships"][0]["grid"][1][1] == "A"
-    assert json.loads(json.dumps(data))["outside_vehicle_ids"] == ["B", "C", "D"]
+    assert json.loads(json.dumps(data))["outside_vehicle_ids"] == list("BCDEFGHIJKLMNOPQRSTUVWXY")
 
 
 def test_copy_does_not_modify_original():

@@ -1,10 +1,21 @@
+import math
+
 from src.core.state import State
+
+
+def json_safe(value):
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if isinstance(value, dict):
+        return {key: json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [json_safe(item) for item in value]
+    return value
 
 
 def serialize_result(result):
     initial = result["initial_state"]
     best = result["best_state"]
-    terminal = result.get("terminal_state", result["final_state"])
 
     history = list(result["history"])
 
@@ -24,9 +35,21 @@ def serialize_result(result):
         "stuck_count",
         "accept_worse",
         "temperature_history",
+        "e_deltaet_history",
+        "log_e_deltaet_history",
+        "population_size",
+        "sideways_moves",
+        "maximum_sideways_move",
+        "restarts",
+        "iterations_per_restart",
+        "history_per_restart",
     ):
         if key in result:
             metrics[key] = result[key]
+
+    if "e_deltaet_history" in result:
+        metrics["e_deltaet_overflow_history"] = [math.isinf(value) for value in result["e_deltaet_history"]]
+        metrics["exponent_nonfinite_history"] = [not math.isfinite(value) for value in result["log_e_deltaet_history"]]
 
     return {
         "status": "success",
@@ -35,11 +58,10 @@ def serialize_result(result):
         "duration": result["duration"],
         "initial_state": initial.to_dict(),
         "final_state": best.to_dict(),
-        "terminal_state": terminal.to_dict(),
         "history": history,
         "best_history": best_history,
+        "mean_history": list(result["mean_history"]) if "mean_history" in result else None,
         "metrics": metrics,
-        "stop_reason": result.get("stop_reason", "finished"),
     }
 
 

@@ -1,49 +1,89 @@
-# Tugas Besar 1 IF3070 - Local Search untuk Optimasi Penempatan Kendaraan pada Kapal
+# Optimasi Muatan Kapal
 
-## Struktur Proyek
+Program mencari penempatan kendaraan pada geladak kapal untuk memaksimalkan total ShippingFee. Solusi harus memenuhi batas geladak, larangan tumpang tindih, dan kapasitas berat kapal.
 
-```text
-src/          # Flask API plus core plus algorithms plus services plus experiments
-frontend/     # HTML plus CSS plus Vanilla JS
-data/         # input dan sample
-output/       # results dan plots
-tests/        # core, algorithms, services
-docs/         # architecture, api, algorithm, experiment
-```
+Antarmuka menyediakan enam pilihan algoritma:
 
-## Quickstart Stage 0
+- Steepest Ascent Hill Climbing.
+- Stochastic Hill Climbing.
+- Hill Climbing with Sideways Move.
+- Random Restart Hill Climbing.
+- Simulated Annealing.
+- Genetic Algorithm.
+
+Setiap pencarian menghasilkan initial state, solusi terbaik, statistik, serta grafik objective.
+
+## Menjalankan aplikasi
+
+Gunakan Python 3.10 atau versi lebih baru. Jalankan perintah dari direktori repository:
 
 ```bash
-pip install -r requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 python -m src.app
-# Buka http://localhost:5000/api/health di browser.
-# Harusnya jawab status success dengan pesan Backend Connected.
 ```
 
-Buka `frontend/index.html` di browser untuk GUI dasar.
+Buka **http://127.0.0.1:5000/** melalui browser.
 
-Contoh data: `data/sample/small.json`. Struktur State dan cara memakai
-problem core dijelaskan di `docs/architecture.md`.
+## Penggunaan
 
-## Kontrak Antarmuka
+1. Gunakan data sampel atau unggah JSON kapal dan kendaraan. Dataset juga bisa diedit langsung.
+2. Pilih algoritma, mode seed **Acak** atau **Manual**, dan parameter pencarian.
+3. Klik **Jalankan optimasi**.
+4. Periksa initial state, solusi terbaik, nilai objective, jumlah langkah, durasi, dan statistik algoritma.
+5. Unduh hasil JSON, grafik PNG, atau visualisasi state SVG jika diperlukan.
 
-- State dipakai bareng sama semua algoritma, tidak bikin sendiri sendiri.
-- Fungsi objective dipanggil dengan satu State, keluarnya angka nilai.
-- Pembikin neighbor dipanggil dengan satu State, keluarnya daftar tetangga.
-- Steepest Ascent menerima State awal, fungsi objective, generator neighbor,
-  dan parameter `max_iterations` (bawaan 1000).
-- Result Steepest Ascent berisi initial_state, final_state, best_state,
-  best_value, history, iterations, duration. State dalam result masih objek
-  Python; gunakan `State.to_dict()` saat menyajikannya sebagai JSON.
+Mode **Acak** adalah default. Setiap eksekusi meminta seed initial state dan seed algoritma baru dari backend. Mode **Manual** menampilkan input seed untuk mengulang run tertentu atau menentukan seed pengulangan secara terkontrol. Nilai manual dipertahankan ketika berganti mode. Seed aktual selalu dicatat pada `configuration.seed` dan `configuration.algorithm_seed` dalam unduhan JSON.
 
-## Pembagian Tugas
+Seed initial state mengatur pembentukan penempatan awal atau populasi awal. Seed algoritma mengatur keputusan acak Stochastic HC, Sideways Move, SA, dan GA; input manual ini dinonaktifkan untuk Steepest Ascent dan Random Restart. Seed yang sama dengan data, parameter, kode, dan lingkungan yang sama dapat mereproduksi hasil; durasi bisa berbeda. Seed berbeda tidak menjamin objective akhir berbeda.
+
+Untuk tiga pengulangan laporan, gunakan misalnya seed initial state `42`, `43`, `44` dan seed algoritma `142`, `143`, `144`, dengan dataset serta parameter tetap. Gunakan daftar seed pengulangan yang sama pada konfigurasi/algoritma yang dibandingkan. Pada GA, seed initial state mengatur populasi awal, bukan satu state yang identik dengan HC/SA.
+
+Sideways Move menerima parameter **Maksimum sideways move** dan menampilkan jumlah perpindahan setara yang dilakukan. Batas nol tetap mengizinkan perpindahan yang meningkatkan objective. Penghitungan sideways move bersifat kumulatif selama pencarian.
+
+Random Restart menerima **Maksimum iterasi per pencarian** dan **Maksimum restart**. Restart dihitung setelah pencarian awal: maksimum restart 2 menghasilkan 3 pencarian. Seed pencarian adalah seed initial state ditambah indeks pencarian, mulai nol. Hasil menampilkan seed, jumlah iterasi, objective awal/akhir, dan grafik setiap pencarian. Grafik utama menampilkan objective terbaik seluruh pencarian terhadap total iterasi.
+
+Pada GA, visualisasi awal adalah individu terbaik populasi awal. Grafik menampilkan maksimum dan rata-rata populasi serta nilai terbaik sepanjang pencarian. Solusi terbaik dapat berbeda dari individu terbaik generasi terakhir jika elitisme dinonaktifkan.
+
+Pada SA, panel analisis menampilkan grafik probabilitas penerimaan `min(1, exp(ΔE/T))` berwarna merah dan temperatur setelah iterasi berwarna oranye. Keduanya dapat diunduh dalam satu PNG. Bagian **Grafik tambahan** menyediakan eksponen dan faktor eksponensial mentah untuk analisis lebih lanjut.
+
+## Struktur
+
+| Direktori | Isi |
+|---|---|
+| `src/core/` | Representasi masalah, objective, constraint, dan neighbor. |
+| `src/algorithms/` | Implementasi algoritma local search. |
+| `src/services/` | Validasi konfigurasi, eksekusi optimasi, dan serialisasi hasil. |
+| `src/app.py` | Server Flask dan API optimasi. |
+| `frontend/` | HTML, CSS, dan JavaScript tanpa proses build. |
+| `data/sample/` | Dataset contoh. |
+| `output/` | Direktori untuk hasil program yang disimpan secara manual. |
+| `tests/` | Pengujian core, algoritma, service, dan frontend. |
+| `docs/` | Dokumentasi teknis dan panduan pengujian. |
+
+Seluruh varian HC dan `src/core/neighbor.py` mengikuti `origin/feature/hc-chia-fix` pada commit `6e74807`, yang mencakup pembaruan core `062caa8`. SA dan GA mengikuti `origin/feature/metaheuristic` pada commit `6b13b2f`. Integrasi web berada di service dan frontend. Pembaruan urutan neighbor dapat menghasilkan history berbeda dari versi core lama, meskipun seed sama.
+
+## Pengujian
+
+```bash
+python -m pytest -q
+node --test tests/frontend/results.test.mjs
+```
+
+Pengujian browser membutuhkan Node.js 22+, Playwright, Chromium, dan aplikasi yang sudah berjalan:
+
+```bash
+npm install --prefix /tmp/if3070-browser-check --no-package-lock playwright
+PLAYWRIGHT_MODULE=/tmp/if3070-browser-check/node_modules/playwright/index.mjs CHROMIUM_PATH=/usr/bin/chromium-browser APP_URL=http://127.0.0.1:5000 node tests/frontend/browser-smoke.mjs
+```
+
+Sesuaikan lokasi Chromium pada komputer yang digunakan. Pengujian browser menjalankan keenam pilihan algoritma dengan parameter kecil, memeriksa hasil per pencarian, batas nol, ekspor, validasi, dan layout mobile.
+
+## Pembagian tugas
 
 - Anggota 1: problem core dan Hill Climbing.
 - Anggota 2: Simulated Annealing dan Genetic Algorithm.
-- Anggota 3: layanan optimasi, eksperimen, API, dan frontend.
+- Anggota 3: service, API, integrasi algoritma, dan frontend.
 
-Steepest Ascent dan Simulated Annealing sudah tersedia di branch integrasi
-`develop`. Cara pemakaian dan hasil keduanya dijelaskan di `docs/algorithm.md`.
-Varian Hill Climbing lain merupakan bonus setelah seluruh bagian wajib proyek
-selesai dan teruji. Endpoint optimasi dan eksperimen serta Genetic Algorithm
-masih menunggu implementasi anggota terkait.
+Dokumentasi: [arsitektur](docs/architecture.md), [API](docs/api.md), [algoritma](docs/algorithm.md), dan [pengujian manual](docs/manual-testing.md).

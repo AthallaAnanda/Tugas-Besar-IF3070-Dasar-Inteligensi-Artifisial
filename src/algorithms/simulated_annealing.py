@@ -1,68 +1,47 @@
 import math
 import random
 import time
-
 from src.core.constraint import is_valid
 
-
-def sample_neighbor(
-    state,
-    current_value,
-    objective_function,
-    neighbor_generator,
-    rng,
-):
-    selected = None
-    selected_value = None
+def sample_neighbor(state, current_value, objective_function, neighbor_generator, rng):
+    selected = None # state from neighbor_generator
+    selected_value = None # objective value of selected
     count = 0
     has_improvement = False
 
     for candidate in neighbor_generator(state):
         value = objective_function(candidate)
-        has_improvement = has_improvement or value > current_value
+        has_improvement = has_improvement or value > current_value # if any neighbor is better than current
         count += 1
 
         if rng.randrange(count) == 0:
-            selected = candidate.copy()
+            selected = candidate.copy() # value is copied to avoid mutation of the original candidate
             selected_value = value
 
     return selected, selected_value, has_improvement
 
+def simulated_annealing(initial_state, objective_function, neighbor_generator, parameters = None):
+    started = time.perf_counter() # function to measure the length of time taken
+    p = parameters or {} # filled with default values if parameters is None
 
-def simulated_annealing(
-    initial_state,
-    objective_function,
-    neighbor_generator,
-    parameters=None,
-    on_step=None, # callback untuk ngerekam kondisi setiap langkah
-):
-    started = time.perf_counter()
-    parameters = {} if parameters is None else parameters
+    temperature = float(p.get("initial_temperature", 1000.0)) # start at T = 1000
+    cooling_rate = float(p.get("cooling_rate", 0.95)) # T = T * 0.95 each iteration
+    min_temperature = float(p.get("min_temperature", 0.001)) # stop if T < 0.001
+    max_iterations = p.get("max_iterations", 1000) # maximum of 1000 iterations
+    rng = random.Random(p.get("seed")) # random number generator for reproducability
 
-    temperature = float(parameters.get("initial_temperature", 1000.0))
-    cooling_rate = float(parameters.get("cooling_rate", 0.95))
-    min_temperature = float(parameters.get("min_temperature", 0.001))
-    max_iterations = parameters.get("max_iterations", 1000)
-    rng = random.Random(parameters.get("seed"))
-
-    # validasi temperatur awal, cooling rate, temperatur minimum
-    if not math.isfinite(temperature) or temperature <= 0:
-        raise ValueError("Temperatur awal harus positif dan terbatas")
-
-    if not math.isfinite(cooling_rate) or not 0 < cooling_rate < 1:
+    if not math.isfinite(temperature) or temperature <= 0 or min_temperature <= 0:
+        raise ValueError("Temperatur harus lebih besar dari 0")
+    if not math.isfinite(cooling_rate) or cooling_rate <= 0 or cooling_rate >= 1:
         raise ValueError("cooling_rate harus berada di antara 0 dan 1")
-
     if not math.isfinite(min_temperature) or min_temperature <= 0:
-        raise ValueError("min_temperature harus positif dan terbatas")
-
+        raise ValueError("min_temperature harus lebih besar dari 0")
     if type(max_iterations) is not int or max_iterations < 0:
-        raise ValueError("max_iterations harus bilangan bulat tidak negatif")
-
+        raise ValueError("max_iterations harus integer non-negatif")
     if not is_valid(initial_state):
-        raise ValueError("initial_state tidak valid")
+        raise ValueError("initial_state tidak valid pada state ini")
 
-    initial_snapshot = initial_state.copy() # nyimpen snapshot dari state awal biar bisa dilacak dan dicek
-    current = initial_snapshot.copy()
+    current = initial_state.copy()
     current_value = objective_function(current)
     best = current.copy()
     best_value = current_value
@@ -70,106 +49,56 @@ def simulated_annealing(
     history = [current_value]
     best_history = [best_value]
     temperature_history = [temperature]
-    # A4: nambahin history eksponen dari branch teman, isinya dicatet per kandidat jadi ga punya data iterasi nol
     e_deltaet_history = []
     log_e_deltaet_history = []
 
     iterations = 0
     stuck_count = 0
     accept_worse = 0
-    stop_reason = "max_iterations" # alasan berhenti default (karena mencapai batas iterasi), fungsinya untuk nyertain alasan berhenti dalam hasil akhir
 
-    # ngerekam state awal sama temperatur awal sebelum iterasi dimulai biar bisa dilacak dari awal
-    if on_step is not None:
-        on_step(
-            current,
-            0,
-            current_value,
-            best_value,
-            decision="initial",
-            temperature=temperature,
-            next_temperature=temperature,
-        )
-
-    for _ in range(max_iterations):
+    for iteration in range(max_iterations):
         if temperature <= min_temperature:
-            stop_reason = "min_temperature" # alasan berhenti karena temperatur udah di bawah batas minimum, fungsinya untuk nyertain alasan berhenti dalam hasil akhir
-            break
+            break # stop if temperature is under threshold
 
-        candidate, candidate_value, has_improvement = sample_neighbor(
-            current,
-            current_value,
-            objective_function,
-            neighbor_generator,
-            rng,
-        )
+        candidate, candidate_value, has_improvement = sample_neighbor(current, current_value, objective_function, neighbor_generator, rng)
 
         if not has_improvement:
             stuck_count += 1
 
         if candidate is None:
-            stop_reason = "no_neighbors" # alasan berhenti karena ga ada neighbor yang valid, fungsinya untuk nyertain alasan berhenti dalam hasil akhir
             break
 
-        used_temperature = temperature # nyimpen temperatur yang dipake buat nentuin probabilitas penerimaan solusi yang lebih buruk, dan yap biar bisa dilacak dan dicek
-        delta = candidate_value - current_value
-        # A4: pake temperatur sebelum pendinginan biar nilai eksponen sesuai sama temperatur yang dicatet buat replay
-        exponent = delta / used_temperature
+        delta = candidate_value - current_value # delta E
+        exponent = delta / temperature # delta E / T
 
-        # A4: pertahanin penanganan overflow dari branch teman biar eksponen besar ga bikin pencarian berhenti karena error
         try:
-            e_deltaet = math.exp(exponent)
+            e_deltaet = math.exp(exponent) # e^(delta E / T)
         except OverflowError:
             e_deltaet = float("inf") if exponent > 0 else 0.0
 
         e_deltaet_history.append(e_deltaet)
         log_e_deltaet_history.append(exponent)
 
-        # A4: hasil eksponen dipake buat penerimaan, kandidat lebih baik tetep diterima tanpa ngambil angka random tambahan
-        accepted = delta >= 0 or rng.random() < e_deltaet
+        accepted = (delta >= 0 or rng.random() < e_deltaet)
 
-        # ngecatet apakah pencarian berpindah ke solusi yang lebih baik, solusi yang sama, solusi yang lebih buruk, atau ditolak (cuma jadi metadata)
-        if accepted:
+        if accepted: # fulfilling rules either better value or worse value with probability
             if delta < 0:
                 accept_worse += 1
-                decision = "accepted_worse"
-            elif delta > 0:
-                decision = "improved"
-            else:
-                decision = "accepted_equal"
-
             current = candidate
             current_value = candidate_value
 
             if current_value > best_value:
                 best = current.copy()
                 best_value = current_value
-        else:
-            decision = "rejected"
 
         iterations += 1
         temperature *= cooling_rate
-
         history.append(current_value)
         best_history.append(best_value)
         temperature_history.append(temperature)
 
-        # ngerekam kondisi setiap langkah iterasi biar bisa dilacak dan dicek, termasuk state saat ini, nilai objektif saat ini, nilai objektif terbaik, keputusan yang diambil, nilai kandidat, apakah diterima atau ditolak, temperatur yang dipake buat nentuin probabilitas penerimaan solusi yang lebih buruk, dan temperatur berikutnya
-        if on_step is not None:
-            on_step(
-                current,
-                iterations,
-                current_value,
-                best_value,
-                decision=decision,
-                candidate_value=candidate_value,
-                accepted=accepted,
-                temperature=used_temperature,
-                next_temperature=temperature,
-            )
-
     return {
-        "initial_state": initial_snapshot, # pake snapshot yang dibuat sebelumnya biar bisa dilacak dan dicek
+        "initial_state": initial_state.copy(),
         "best_state": best.copy(),
         "best_value": best_value,
         "final_state": best.copy(),
@@ -179,12 +108,10 @@ def simulated_annealing(
         "history": history,
         "best_history": best_history,
         "temperature_history": temperature_history,
-        # A4: balikin dua history tambahan sambil tetep nyertain snapshot, callback, dan alasan berhenti yang udah ada
         "e_deltaet_history": e_deltaet_history,
         "log_e_deltaet_history": log_e_deltaet_history,
         "iterations": iterations,
         "duration": time.perf_counter() - started,
         "stuck_count": stuck_count,
         "accept_worse": accept_worse,
-        "stop_reason": stop_reason, # nyertain alasan berhenti dalam hasil akhir biar bisa dilacak dan dicek
     }

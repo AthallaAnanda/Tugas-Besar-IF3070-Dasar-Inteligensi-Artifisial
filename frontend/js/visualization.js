@@ -1,3 +1,5 @@
+import { download } from "./ui.js";
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 function svgElement(name, attributes = {}) {
@@ -20,51 +22,7 @@ function colorFor(id) {
   return "hsl(" + (hash % 360) + ", 58%, 72%)";
 }
 
-function placementMap(state) {
-  const result = new Map();
-
-  if (!state) {
-    return result;
-  }
-
-  for (const item of state.ships) {
-    for (const placement of item.placements) {
-      result.set(placement.vehicle_id, JSON.stringify(placement));
-    }
-  }
-
-  return result;
-}
-
-export function materializeFrame(initialState, frame) {
-  const loaded = new Set();
-
-  for (const placement of frame.placements) {
-    loaded.add(placement.vehicle_id);
-  }
-
-  return {
-    vehicles: initialState.vehicles,
-    ships: initialState.ships.map(function (item) {
-      return {
-        ship: item.ship,
-        placements: frame.placements.filter(function (placement) {
-          return placement.ship_id === item.ship.id;
-        })
-      };
-    }),
-    outside_vehicle_ids: initialState.vehicles
-      .filter(function (vehicle) {
-        return !loaded.has(vehicle.id);
-      })
-      .map(function (vehicle) {
-        return vehicle.id;
-      }),
-    value: frame.objective_value
-  };
-}
-
-export function renderState(state, container, previousState = null) {
+export function renderState(state, container) {
   container.replaceChildren();
 
   const vehicles = new Map();
@@ -72,8 +30,6 @@ export function renderState(state, container, previousState = null) {
   for (const vehicle of state.vehicles) {
     vehicles.set(vehicle.id, vehicle);
   }
-
-  const previous = placementMap(previousState);
 
   for (const item of state.ships) {
     const card = document.createElement("div");
@@ -122,10 +78,6 @@ export function renderState(state, container, previousState = null) {
       const width = vertical ? vehicle.length : vehicle.width;
       const length = vertical ? vehicle.width : vehicle.length;
 
-      const changed =
-        previousState !== null &&
-        previous.get(vehicle.id) !== JSON.stringify(placement);
-
       weight += vehicle.weight;
 
       const group = svgElement("g");
@@ -145,8 +97,8 @@ export function renderState(state, container, previousState = null) {
         height: length - 0.1,
         rx: 0.08,
         fill: colorFor(vehicle.id),
-        stroke: changed ? "#e25822" : "#455a70",
-        "stroke-width": changed ? 0.09 : 0.025
+        stroke: "#455a70",
+        "stroke-width": 0.025
       });
 
       const label = svgElement("text", {
@@ -168,7 +120,17 @@ export function renderState(state, container, previousState = null) {
       item.placements.length + " kendaraan dimuat dengan total berat " +
       weight + " dari kapasitas " + item.ship.max_capacity + ".";
 
-    card.append(heading, svg, details);
+    const exportButton = document.createElement("button");
+    exportButton.type = "button";
+    exportButton.textContent = "Unduh state SVG";
+    exportButton.onclick = () => {
+      const copy = svg.cloneNode(true);
+      copy.setAttribute("xmlns", SVG_NS);
+      copy.setAttribute("width", "800");
+      copy.setAttribute("height", String(800 * item.ship.length / item.ship.width));
+      download(`state-${item.ship.id}.svg`, new XMLSerializer().serializeToString(copy), "image/svg+xml");
+    };
+    card.append(heading, svg, details, exportButton);
     container.append(card);
   }
 

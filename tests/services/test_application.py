@@ -5,8 +5,6 @@ import pytest
 from src.app import app
 from src.core.constraint import is_valid
 from src.core.state import State, load_problem
-from src.experiments.runner import runner
-from src.services.experiment import run_experiment
 from src.services.optimization import run_optimization
 
 
@@ -18,139 +16,102 @@ def problem_data():
 
 
 def configuration(algorithm="hill_climbing"):
-    return {
-        "algorithm": algorithm,
-        "problem": problem_data(),
-        "seed": 42,
-        "algorithm_seed": 43,
-        "parameters": {
-            "max_iterations": 10,
-        },
-        "record_steps": True,
+    parameters = {"max_iterations": 10}
+    if algorithm == "genetic_algorithm":
+        parameters.update(population_size=4, max_iterations=3)
+    if algorithm == "random_restart":
+        parameters.update(maximum_restart=2, max_iterations=3)
+    return {"algorithm": algorithm, "problem": problem_data(), "seed": 42,
+            "algorithm_seed": 43, "parameters": parameters}
+
+
+@pytest.mark.parametrize("algorithm", [
+    "hill_climbing", "stochastic_hill_climbing", "sideways_move", "random_restart",
+    "simulated_annealing", "genetic_algorithm",
+])
+def test_optimization_returns_valid_reproducible_solution_and_history(algorithm):
+    first = run_optimization(configuration(algorithm))
+    second = run_optimization(configuration(algorithm))
+    assert first["status"] == "success"
+    assert len(first["history"]) == first["iterations"] + 1
+    assert first["objective_value"] == first["best_history"][-1]
+    assert first["objective_value"] >= first["history"][0]
+    assert is_valid(State.from_dict(first["initial_state"]))
+    assert is_valid(State.from_dict(first["final_state"]))
+    for key in ("initial_state", "final_state", "history", "best_history"):
+        assert first[key] == second[key]
+    assert first["duration"] >= 0
+    assert first["initialization_duration"] >= 0
+
+
+def test_api_serves_frontend_and_supported_optimization_contract():
+    client = app.test_client()
+    assert {rule.rule for rule in app.url_map.iter_rules()} == {
+        "/", "/assets/<path:filename>", "/api/health", "/api/sample",
+        "/api/capabilities", "/api/optimize",
+    }
+    assert client.get("/").status_code == 200
+    assert client.get("/assets/js/app.js").status_code == 200
+    assert set(client.get("/api/capabilities").get_json()) == {"algorithms", "objectives"}
+    response = client.post("/api/optimize", json=configuration())
+    assert response.status_code == 200
+    assert set(response.get_json()) == {
+        "status", "objective_value", "iterations", "duration", "initial_state", "final_state",
+        "history", "best_history", "mean_history", "metrics", "initialization_duration",
+        "algorithm", "step_type", "stop_reason", "statistics", "configuration",
     }
 
 
-@pytest.mark.parametrize(
-    "algorithm",
-    ["hill_climbing", "simulated_annealing"],
-)
-def test_result_and_trace_follow_same_iterations(algorithm):
-    result = run_optimization(configuration(algorithm))
-    frames = result["trace"]["frames"]
-
-    assert result["status"] == "success"
-    assert frames[0]["iteration"] == 0
-    assert frames[-1]["iteration"] == result["iterations"]
-    assert len(frames) == len(result["history"])
-    assert is_valid(State.from_dict(result["final_state"]))
-
-    for frame in frames:
-        iteration = frame["iteration"]
-        assert frame["objective_value"] == result["history"][iteration]
-        assert frame["best_value"] == result["best_history"][iteration]
-
-    terminal = [
-        placement
-        for ship in result["terminal_state"]["ships"]
-        for placement in ship["placements"]
-    ]
-
-    assert frames[-1]["placements"] == terminal
-
-
-def test_trace_interval_keeps_last_iteration():
-    config = configuration("simulated_annealing")
-    config["trace_interval"] = 4
-    result = run_optimization(config)
-
-    iterations = [
-        frame["iteration"]
-        for frame in result["trace"]["frames"]
-    ]
-
-    assert iterations[0] == 0
-    assert iterations[-1] == result["iterations"]
-    assert len(iterations) == len(set(iterations))
-
-
-def test_trace_can_be_disabled():
-    config = configuration()
-    config["record_steps"] = False
-
-    result = run_optimization(config)
-
-    assert result["trace"]["frames"] == []
-    assert result["trace"]["enabled"] is False
-
-
-def test_experiment_pairs_initial_states():
-    result = run_experiment({
-        "problem": problem_data(),
-        "seed": 42,
-        "runs": 2,
-        "configurations": [
-            {
-                "algorithm": "hill_climbing",
-                "parameters": {"max_iterations": 2},
-            },
-            {
-                "algorithm": "simulated_annealing",
-                "parameters": {"max_iterations": 2},
-            },
-        ],
-    })
-
-    assert len(result["results"]) == 4
-    assert len(result["summaries"]) == 2
-
-    first = result["results"][0]["result"]["initial_state"]
-    paired = result["results"][2]["result"]["initial_state"]
-
-    assert first == paired
-    assert all(
-        not item["result"]["trace"]["enabled"]
-        for item in result["results"]
-    )
-
-
-def test_runner_saves_json_and_csv(tmp_path):
-    result = runner({
-        "problem": problem_data(),
-        "runs": 1,
-        "seed": 42,
-        "configurations": [
-            {
-                "algorithm": "hill_climbing",
-                "parameters": {"max_iterations": 1},
-            }
-        ],
-    }, output_dir=tmp_path)
-
-    assert Path(result["saved_files"]["json"]).exists()
-    assert Path(result["saved_files"]["csv"]).exists()
-
-
-def test_api_serves_frontend_and_optimization():
-    client = app.test_client()
-
-    assert client.get("/").status_code == 200
-    assert client.get("/assets/js/app.js").status_code == 200
-    assert client.get("/api/capabilities").status_code == 200
-
-    response = client.post("/api/optimize", json=configuration())
-
-    assert response.status_code == 200
-    assert response.get_json()["status"] == "success"
-
-
 @pytest.mark.parametrize("payload", [
-    {},
-    {"algorithm": "genetic_algorithm"},
+    {}, {"algorithm": "genetic_algorithm"},
     {**configuration(), "parameters": {"max_iterations": -1}},
-    {**configuration(), "trace_interval": 0},
+    {**configuration(), "parameters": {"max_iterations": True}},
+    {**configuration(), "parameters": {"unknown": 1}},
 ])
 def test_api_rejects_invalid_request(payload):
     response = app.test_client().post("/api/optimize", json=payload)
-
     assert response.status_code == 400
     assert response.get_json()["status"] == "error"
+
+
+@pytest.mark.parametrize("algorithm,parameters,reason", [
+    ("hill_climbing", {"max_iterations": 1}, "no_improvement"),
+    ("stochastic_hill_climbing", {"max_iterations": 3}, "no_neighbors"),
+    ("sideways_move", {"max_iterations": 3}, "no_admissible_move"),
+    ("random_restart", {"maximum_restart": 0}, "max_restarts"),
+    ("simulated_annealing", {"max_iterations": 0}, "max_iterations"),
+    ("simulated_annealing", {"initial_temperature": 1, "min_temperature": 1}, "min_temperature"),
+    ("simulated_annealing", {}, "no_neighbors"),
+    ("genetic_algorithm", {"population_size": 2, "max_iterations": 0}, "max_iterations"),
+])
+def test_service_explains_termination_without_algorithm_instrumentation(algorithm, parameters, reason):
+    result = run_optimization({"algorithm": algorithm, "problem": {
+        "ships": [{"id": "empty", "width": 1, "length": 1, "max_capacity": 1}], "vehicles": [],
+    }, "seed": 42, "parameters": parameters})
+    assert result["stop_reason"] == reason
+
+
+@pytest.mark.parametrize("algorithm", [
+    "hill_climbing", "stochastic_hill_climbing", "sideways_move", "random_restart",
+    "simulated_annealing", "genetic_algorithm",
+])
+def test_null_seeds_are_generated_per_run_and_can_be_reused_manually(monkeypatch, algorithm):
+    from importlib import import_module
+
+    module = import_module("src.services.optimization")
+    generated = iter([7001, 9001, 7002, 9002])
+    monkeypatch.setattr(module.secrets, "randbits", lambda bits: next(generated))
+    client = app.test_client()
+    payload = {**configuration(algorithm), "seed": None, "algorithm_seed": None}
+    first_response = client.post("/api/optimize", json=payload)
+    second_response = client.post("/api/optimize", json=payload)
+    assert first_response.status_code == second_response.status_code == 200
+    first = first_response.get_json()
+    second = second_response.get_json()
+    assert (first["configuration"]["seed"], first["configuration"]["algorithm_seed"]) == (7001, 9001)
+    assert (second["configuration"]["seed"], second["configuration"]["algorithm_seed"]) == (7002, 9002)
+    repeated = client.post("/api/optimize", json={**payload, "seed": 7001, "algorithm_seed": 9001}).get_json()
+    for field in ("initial_state", "final_state", "history", "best_history", "mean_history"):
+        assert repeated[field] == first[field]
+    if algorithm == "random_restart":
+        assert repeated["configuration"]["restart_seeds"] == first["configuration"]["restart_seeds"]

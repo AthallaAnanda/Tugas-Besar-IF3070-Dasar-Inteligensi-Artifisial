@@ -6,9 +6,9 @@ __pycache__/
 venv/
 .env
 
-# Output eksperimen (hasil run, bukan skeleton)
-output/results/*.json
-output/plots/*.png
+# Hasil program
+output/results/*
+output/plots/*
 !output/results/.gitkeep
 !output/plots/.gitkeep
 

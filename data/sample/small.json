@@ -1,11 +1,32 @@
 {
   "ships": [
-    {"id": "ship_1", "width": 5, "length": 4, "max_capacity": 8}
+    {"id": "ship_1", "length": 6, "width": 7, "max_capacity": 15}
   ],
   "vehicles": [
-    {"id": "A", "width": 2, "length": 2, "shipping_fee": 60, "weight": 3, "eta": 2},
-    {"id": "B", "width": 1, "length": 3, "shipping_fee": 40, "weight": 4, "eta": 1},
-    {"id": "C", "width": 2, "length": 1, "shipping_fee": 30, "weight": 2, "eta": 3},
-    {"id": "D", "width": 1, "length": 1, "shipping_fee": 10, "weight": 1, "eta": 0}
+    {"id": "A", "eta": 2, "length": 2, "width": 2, "weight": 3, "shipping_fee": 60},
+    {"id": "B", "eta": 1, "length": 3, "width": 1, "weight": 4, "shipping_fee": 40},
+    {"id": "C", "eta": 3, "length": 1, "width": 2, "weight": 2, "shipping_fee": 30},
+    {"id": "D", "eta": 0, "length": 1, "width": 1, "weight": 1, "shipping_fee": 10},
+    {"id": "E", "eta": 3, "length": 2, "width": 4, "weight": 2, "shipping_fee": 70},
+    {"id": "F", "eta": 4, "length": 1, "width": 3, "weight": 2, "shipping_fee": 35},
+    {"id": "G", "eta": 2, "length": 4, "width": 1, "weight": 5, "shipping_fee": 55},
+    {"id": "H", "eta": 5, "length": 2, "width": 3, "weight": 4, "shipping_fee": 80},
+    {"id": "I", "eta": 1, "length": 3, "width": 2, "weight": 3, "shipping_fee": 65},
+    {"id": "J", "eta": 0, "length": 1, "width": 2, "weight": 1, "shipping_fee": 20},
+    {"id": "K", "eta": 4, "length": 2, "width": 1, "weight": 2, "shipping_fee": 25},
+    {"id": "L", "eta": 3, "length": 3, "width": 3, "weight": 5, "shipping_fee": 90},
+    {"id": "M", "eta": 2, "length": 1, "width": 4, "weight": 3, "shipping_fee": 45},
+    {"id": "N", "eta": 5, "length": 2, "width": 2, "weight": 2, "shipping_fee": 50},
+    {"id": "O", "eta": 1, "length": 4, "width": 2, "weight": 4, "shipping_fee": 75},
+    {"id": "P", "eta": 6, "length": 6, "width": 1, "weight": 5, "shipping_fee": 85},
+    {"id": "Q", "eta": 4, "length": 1, "width": 7, "weight": 3, "shipping_fee": 95},
+    {"id": "R", "eta": 2, "length": 5, "width": 2, "weight": 6, "shipping_fee": 110},
+    {"id": "S", "eta": 0, "length": 3, "width": 4, "weight": 6, "shipping_fee": 120},
+    {"id": "T", "eta": 6, "length": 2, "width": 5, "weight": 3, "shipping_fee": 100},
+    {"id": "U", "eta": 3, "length": 7, "width": 1, "weight": 2, "shipping_fee": 60},
+    {"id": "V", "eta": 7, "length": 3, "width": 3, "weight": 2, "shipping_fee": 105},
+    {"id": "W", "eta": 7, "length": 1, "width": 1, "weight": 1, "shipping_fee": 18},
+    {"id": "X", "eta": 5, "length": 2, "width": 6, "weight": 7, "shipping_fee": 130},
+    {"id": "Y", "eta": 2, "length": 4, "width": 3, "weight": 4, "shipping_fee": 70}
   ]
 }

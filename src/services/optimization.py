@@ -1,30 +1,51 @@
-import math
+import random
 import secrets
+from time import perf_counter
 
-from src.algorithms.hill_climbing import steepest_ascent
+from src.algorithms.genetic_algorithm import genetic_algorithm
+from src.algorithms.hill_climbing import random_restart, sideways_move, steepest_ascent, stochastic_hill_climbing
 from src.algorithms.simulated_annealing import simulated_annealing
 from src.core.neighbor import generate_neighbors
 from src.core.objective import objective_1
 from src.core.state import State, create_initial_state
-from src.services.serialization import serialize_result, state_statistics
-from src.services.trace import TraceRecorder
+from src.services.serialization import json_safe, serialize_result, state_statistics
+from src.services.validation import validate_fields
 
+
+HC_ITERATIONS = {"label": "Maksimum iterasi", "type": "integer", "default": 100, "min": 1}
 
 ALGORITHMS = {
     "hill_climbing": {
         "label": "Steepest Ascent Hill Climbing",
         "variant": "steepest_ascent",
+        "parameters": {"max_iterations": HC_ITERATIONS},
+    },
+    "stochastic_hill_climbing": {
+        "label": "Stochastic Hill Climbing",
+        "variant": "stochastic",
+        "uses_algorithm_seed": True,
+        "parameters": {"max_iterations": HC_ITERATIONS},
+    },
+    "sideways_move": {
+        "label": "Hill Climbing with Sideways Move",
+        "variant": "sideways_move",
+        "uses_algorithm_seed": True,
         "parameters": {
-            "max_iterations": {
-                "label": "Maksimum iterasi",
-                "type": "integer",
-                "default": 100,
-                "min": 1,
-            },
+            "max_iterations": HC_ITERATIONS,
+            "maximum_sideways_move": {"label": "Maksimum sideways move", "type": "integer", "default": 100, "min": 0},
+        },
+    },
+    "random_restart": {
+        "label": "Random Restart Hill Climbing",
+        "variant": "random_restart",
+        "parameters": {
+            "max_iterations": {**HC_ITERATIONS, "label": "Maksimum iterasi per pencarian"},
+            "maximum_restart": {"label": "Maksimum restart", "type": "integer", "default": 10, "min": 0},
         },
     },
     "simulated_annealing": {
         "label": "Simulated Annealing",
+        "uses_algorithm_seed": True,
         "parameters": {
             "max_iterations": {
                 "label": "Maksimum iterasi",
@@ -53,10 +74,24 @@ ALGORITHMS = {
             },
         },
     },
+    "genetic_algorithm": {
+        "label": "Genetic Algorithm",
+        "uses_algorithm_seed": True,
+        "parameters": {
+            "max_iterations": {"label": "Maksimum generasi", "type": "integer", "default": 100, "min": 0},
+            "population_size": {"label": "Jumlah populasi", "type": "integer", "default": 50, "min": 2},
+            "crossover_rate": {"label": "Crossover rate", "type": "number", "default": 0.8, "min": 0, "max": 1},
+            "mutation_rate": {"label": "Mutation rate", "type": "number", "default": 0.2, "min": 0, "max": 1},
+            "elitism": {"label": "Jumlah elite", "type": "integer", "default": 1, "min": 0},
+            "tour_size": {"label": "Tournament size", "type": "integer", "default": 2, "min": 1},
+        },
+    },
 }
 
 FUNCTIONS = {
     "hill_climbing": steepest_ascent,
+    "stochastic_hill_climbing": stochastic_hill_climbing,
+    "sideways_move": sideways_move,
     "simulated_annealing": simulated_annealing,
 }
 
@@ -84,54 +119,22 @@ def read_seed(value, name):
 
 
 def validate_parameters(algorithm, supplied):
-    if not isinstance(supplied, dict):
-        raise ValueError("parameters harus berupa object")
-
-    specification = ALGORITHMS[algorithm]["parameters"]
-    unknown = set(supplied) - set(specification)
-
-    if unknown:
-        names = ", ".join(sorted(unknown))
-        raise ValueError(f"Parameter tidak dikenal: {names}")
-
-    parameters = {}
-
-    for name, rules in specification.items():
-        value = supplied.get(name, rules["default"])
-
-        if rules["type"] == "integer":
-            valid_type = type(value) is int
-        else:
-            valid_type = type(value) in (int, float)
-
-        if not valid_type or not math.isfinite(value):
-            raise ValueError(f"{name} harus berupa angka yang valid")
-
-        if "min" in rules and value < rules["min"]:
-            raise ValueError(f"{name} minimal {rules['min']}")
-
-        if "exclusive_min" in rules and value <= rules["exclusive_min"]:
-            raise ValueError(
-                f"{name} harus lebih besar dari {rules['exclusive_min']}"
-            )
-
-        if "exclusive_max" in rules and value >= rules["exclusive_max"]:
-            raise ValueError(
-                f"{name} harus lebih kecil dari {rules['exclusive_max']}"
-            )
-
-        parameters[name] = value
-
+    parameters = validate_fields(supplied, ALGORITHMS[algorithm]["parameters"])
+    if algorithm == "genetic_algorithm":
+        if parameters["elitism"] >= parameters["population_size"]:
+            raise ValueError("Jumlah elite harus lebih kecil daripada jumlah populasi")
+        if parameters["tour_size"] > parameters["population_size"]:
+            raise ValueError("Tournament size tidak boleh melebihi jumlah populasi")
     return parameters
 
 
-def run_optimization(config):
+def prepare_optimization(config):
     if not isinstance(config, dict):
         raise ValueError("Konfigurasi harus berupa object")
 
     algorithm = config.get("algorithm", "hill_climbing")
 
-    if algorithm not in ALGORITHMS:
+    if not isinstance(algorithm, str) or algorithm not in ALGORITHMS:
         raise ValueError("Algoritma belum tersedia")
 
     objective = config.get("objective", "objective_1")
@@ -139,9 +142,9 @@ def run_optimization(config):
     if objective != "objective_1":
         raise ValueError("Objective belum tersedia")
 
-    if algorithm == "hill_climbing":
-        if config.get("variant", "steepest_ascent") != "steepest_ascent":
-            raise ValueError("Varian Hill Climbing belum tersedia")
+    variant = ALGORITHMS[algorithm].get("variant")
+    if variant and config.get("variant", variant) != variant:
+        raise ValueError("Varian tidak sesuai dengan algoritma yang dipilih")
 
     try:
         problem = State.from_dict(config["problem"])
@@ -159,57 +162,88 @@ def run_optimization(config):
         config.get("parameters", {}),
     )
 
-    record_steps = config.get("record_steps", False)
-
-    if type(record_steps) is not bool:
-        raise ValueError("record_steps harus berupa boolean")
-
-    interval = config.get("trace_interval", 1)
-
-    if type(interval) is not int or interval < 1:
-        raise ValueError("trace_interval harus bilangan bulat positif")
-
-    initial = create_initial_state(
-        [item.ship for item in problem.ships],
-        list(problem.vehicles.values()),
-        seed=initial_seed,
-    )
-
-    recorder = TraceRecorder(interval) if record_steps else None
-    execution_parameters = dict(parameters)
-
-    if algorithm == "simulated_annealing":
-        execution_parameters["seed"] = algorithm_seed
-
-    raw = FUNCTIONS[algorithm](
-        initial,
-        objective_1,
-        generate_neighbors,
-        execution_parameters,
-        on_step=recorder,
-    )
-
-    output = serialize_result(raw)
-    recording_duration = recorder.duration if recorder else 0.0
-
-    output["duration"] = max(0.0, raw["duration"] - recording_duration)
-    output["recording_duration"] = recording_duration
-    output["algorithm"] = algorithm
-    output["statistics"] = state_statistics(raw["best_state"])
-
-    output["configuration"] = {
+    return problem, {
         "algorithm": algorithm,
-        "variant": ALGORITHMS[algorithm].get("variant"),
+        "variant": variant,
         "objective": objective,
         "seed": initial_seed,
         "algorithm_seed": algorithm_seed,
         "parameters": parameters,
     }
 
-    output["trace"] = {
-        "enabled": record_steps,
-        "interval": interval,
-        "frames": recorder.finish() if recorder else [],
-    }
 
-    return output
+def run_optimization(config):
+    problem, configuration = prepare_optimization(config)
+    algorithm = configuration["algorithm"]
+    parameters = configuration["parameters"]
+    initial_seed = configuration["seed"]
+    algorithm_seed = configuration["algorithm_seed"]
+    ships = [item.ship for item in problem.ships]
+    vehicles = list(problem.vehicles.values())
+    initialization_started = perf_counter()
+
+    if algorithm == "genetic_algorithm":
+        population_rng = random.Random(initial_seed)
+        population_seeds = [population_rng.getrandbits(32) for _ in range(parameters["population_size"])]
+        population = [create_initial_state(ships, vehicles, seed=seed) for seed in population_seeds]
+
+        def initial_population():
+            return population
+    elif algorithm == "random_restart":
+        restart_seeds = [initial_seed + index for index in range(parameters["maximum_restart"] + 1)]
+        initial_states = iter([create_initial_state(ships, vehicles, seed=seed) for seed in restart_seeds])
+
+        def initial_state_factory():
+            return next(initial_states)
+    else:
+        initial = create_initial_state(ships, vehicles, seed=initial_seed)
+
+    initialization_duration = perf_counter() - initialization_started
+
+    execution_parameters = dict(parameters)
+
+    if ALGORITHMS[algorithm].get("uses_algorithm_seed", False):
+        execution_parameters["seed"] = algorithm_seed
+
+    if algorithm == "genetic_algorithm":
+        raw = genetic_algorithm(initial_population, objective_1, execution_parameters)
+    elif algorithm == "random_restart":
+        raw = random_restart(initial_state_factory, objective_1, generate_neighbors, execution_parameters)
+    else:
+        raw = FUNCTIONS[algorithm](initial, objective_1, generate_neighbors, execution_parameters)
+
+    output = serialize_result(raw)
+    output["initialization_duration"] = initialization_duration
+    output["algorithm"] = algorithm
+    output["step_type"] = "generation" if algorithm == "genetic_algorithm" else "iteration"
+    output["stop_reason"] = stop_reason(algorithm, raw, parameters)
+    output["statistics"] = state_statistics(raw["best_state"])
+
+    output["configuration"] = configuration
+    if algorithm == "genetic_algorithm":
+        output["configuration"]["population_seeds"] = population_seeds
+    elif algorithm == "random_restart":
+        output["configuration"]["restart_seeds"] = restart_seeds
+
+    return json_safe(output)
+
+
+def stop_reason(algorithm, result, parameters):
+    """Describe termination using returned histories, without modifying algorithms."""
+    if algorithm == "genetic_algorithm":
+        return "max_iterations"
+    if algorithm == "random_restart":
+        return "max_restarts"
+    if algorithm == "stochastic_hill_climbing":
+        return "no_neighbors" if result["iterations"] < parameters["max_iterations"] else "max_iterations"
+    if algorithm == "sideways_move":
+        if parameters["maximum_sideways_move"] > 0 and result["sideways_moves"] >= parameters["maximum_sideways_move"]:
+            return "max_sideways_moves"
+        return "max_iterations" if result["iterations"] >= parameters["max_iterations"] else "no_admissible_move"
+    if algorithm == "hill_climbing":
+        return "no_improvement" if result["history"][-1] == result["history"][-2] else "max_iterations"
+    if result["temperature_history"][-1] <= parameters["min_temperature"] and result["iterations"] < parameters["max_iterations"]:
+        return "min_temperature"
+    if result["iterations"] < parameters["max_iterations"]:
+        return "no_neighbors"
+    return "max_iterations"

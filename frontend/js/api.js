@@ -41,7 +41,3 @@ export function getSample() {
 export function optimize(payload) {
   return request("/optimize", payload);
 }
-
-export function experiment(payload) {
-  return request("/experiment", payload);
-}
