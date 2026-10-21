@@ -1,20 +1,43 @@
-// Halo, ini api.js.
-// Tugasnya sederhana, jadi kurir yang ngobrol sama Flask API.
-// Kalau mau ganti alamat backend, ubah API_BASE di bawah ini saja.
-const API_BASE = "http://localhost:5000/api";
+async function request(path, payload) {
+  const options = {};
 
-// Cek backend masih hidup atau tidak.
-async function checkHealth() {
-  const res = await fetch(API_BASE + "/health");
-  return res.json();
+  if (payload !== undefined) {
+    options.method = "POST";
+    options.headers = {
+      "Content-Type": "application/json"
+    };
+    options.body = JSON.stringify(payload);
+  }
+
+  const response = await fetch("/api" + path, options);
+
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error("Backend mengirim respons yang tidak dapat dibaca");
+  }
+
+  if (!response.ok) {
+    throw new Error(data.message || "Permintaan gagal");
+  }
+
+  return data;
 }
 
-// Kirim config optimasi ke backend lalu tunggu jawabannya.
-async function runOptimization(payload) {
-  const res = await fetch(API_BASE + "/optimize", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  return res.json();
+export function getHealth() {
+  return request("/health");
+}
+
+export function getCapabilities() {
+  return request("/capabilities");
+}
+
+export function getSample() {
+  return request("/sample");
+}
+
+export function optimize(payload) {
+  return request("/optimize", payload);
 }

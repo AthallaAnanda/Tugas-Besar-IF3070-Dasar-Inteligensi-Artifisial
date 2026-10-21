@@ -2,13 +2,13 @@
 
 from time import perf_counter
 
+from ._common import build_result, validate_limit
+
 
 def steepest_ascent(initial_state, objective_function, neighbor_generator, parameters=None):
     """Pilih neighbor terbaik selama nilainya meningkat."""
     parameters = {} if parameters is None else parameters
-    max_iterations = parameters.get("max_iterations", 1000)
-    if type(max_iterations) is not int or max_iterations <= 0:
-        raise ValueError("max_iterations harus bilangan bulat positif")
+    max_iterations = validate_limit(parameters, "max_iterations", 1000)
 
     started = perf_counter()
     initial_snapshot = initial_state.copy()
@@ -34,12 +34,5 @@ def steepest_ascent(initial_state, objective_function, neighbor_generator, param
         if best_neighbor is None:
             break
 
-    return {
-        "initial_state": initial_snapshot,
-        "final_state": current,
-        "best_state": current,
-        "best_value": current_value,
-        "history": history,
-        "iterations": iterations,
-        "duration": perf_counter() - started,
-    }
+    return build_result(initial_snapshot, current, current_value, history,
+                        iterations, perf_counter() - started)

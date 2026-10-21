@@ -1,7 +1,88 @@
-/* Halo, ini style dasar buat Tahap 0. */
-/* Maaf tampilannya masih sederhana, nanti Anggota 3 percantik di Tahap 4. */
-/* Di sini ada style buat badan halaman, header, dan kotak visualisasi kapal. */
-body { font-family: sans-serif; margin: 0; padding: 0 1rem; }
-header { border-bottom: 1px solid #ccc; }
-main { display: grid; gap: 1rem; max-width: 900px; }
-.ship-viz { border: 1px dashed #888; min-height: 200px; display: grid; place-items: center; }
+:root {
+  font-family: system-ui, sans-serif;
+  color: #173047;
+  background: #f1f5f8;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input, select, textarea { font: inherit; }
+button, input, select, textarea { border: 1px solid #cbd5e1; border-radius: 7px; }
+button { padding: 10px 16px; background: white; color: inherit; cursor: pointer; }
+button:hover { background: #eaf1f7; }
+button:disabled { cursor: wait; opacity: 0.6; }
+button.primary { background: #126c8c; color: white; border-color: #126c8c; }
+button.primary:hover { background: #0c566f; }
+input, select, textarea { width: 100%; min-width: 0; padding: 10px 12px; background: white; color: inherit; }
+input:disabled { background: #eef2f6; color: #64748b; }
+input[type="file"] { padding: 7px; }
+textarea { resize: vertical; font-family: ui-monospace, monospace; font-size: 0.85rem; }
+label { display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; font-weight: 600; }
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+legend { font-size: 1.25rem; font-weight: 700; margin-bottom: 24px; }
+h1, h2, h3, h4 { margin: 0 0 16px; }
+h1 { font-size: 1.6rem; margin: 0; }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.1rem; }
+h4 { font-size: 1rem; }
+p { line-height: 1.6; }
+.page-header, main { max-width: 1200px; margin: auto; padding: 24px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 0; }
+.badge { background: #e0f2ee; color: #176857; padding: 8px 12px; border-radius: 7px; font-size: 0.85rem; }
+.panel { background: white; border: 1px solid #dae3eb; border-radius: 12px; padding: 24px; margin-bottom: 24px; min-width: 0; }
+.form-grid, .data-toolbar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-bottom: 24px; }
+.algorithm-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.seed-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.data-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
+.data-toolbar button { min-height: 44px; }
+details { margin: 20px 0; }
+summary { cursor: pointer; font-weight: 600; }
+details[open] > summary { margin-bottom: 16px; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.section-heading h2, .section-heading h3 { margin: 0; }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.metric { border: 1px solid #dae3eb; border-radius: 10px; padding: 20px; background: white; }
+.metric span { font-size: 0.9rem; }
+.metric strong { display: block; margin-top: 10px; font-size: 1.5rem; overflow-wrap: anywhere; }
+.value-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin: 0; }
+.value-grid > div { min-width: 0; }
+dt { font-size: 0.85rem; color: #536976; margin-bottom: 6px; }
+dd { margin: 0; overflow-wrap: anywhere; }
+.state-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.ship-card + .ship-card { margin-top: 24px; }
+.deck { display: block; width: 100%; max-height: 360px; background: #eff7fb; border: 1px solid #cbd5e1; border-radius: 7px; }
+.vehicle-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.vehicle-tag { background: #eef2f6; border-radius: 5px; padding: 6px 10px; font-size: 0.85rem; }
+canvas { display: block; width: 100%; height: 300px; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.9rem; }
+.chart-subheading { margin-top: 24px; }
+#diagnostics-section label { max-width: 380px; margin-bottom: 20px; }
+.table-scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; border-bottom: 1px solid #dae3eb; padding: 12px; white-space: nowrap; }
+th { font-size: 0.9rem; }
+.restart-controls { margin-top: 24px; align-items: end; }
+.restart-controls label { flex: 1 1 200px; max-width: 380px; }
+#result-status { padding: 12px 16px; border-left: 3px solid #176857; background: #e0f2ee; border-radius: 5px; }
+#result-section { scroll-margin-top: 24px; }
+#message.error { color: #b42318; }
+#message:empty { display: none; }
+:focus-visible { outline: 3px solid #38a5ce; outline-offset: 3px; }
+[hidden] { display: none !important; }
+
+@media (max-width: 900px) {
+  .form-grid, .metrics, .value-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .state-comparison { grid-template-columns: 1fr; gap: 0; }
+}
+
+@media (max-width: 540px) {
+  .page-header { align-items: flex-start; flex-direction: column; }
+  .page-header, main { padding: 16px; }
+  .page-header { padding-bottom: 0; }
+  .panel { padding: 16px; }
+  .form-grid, .data-toolbar, .value-grid { grid-template-columns: 1fr; }
+  .metrics { gap: 10px; }
+  .metric { padding: 14px; }
+  .metric strong { font-size: 1.2rem; }
+}

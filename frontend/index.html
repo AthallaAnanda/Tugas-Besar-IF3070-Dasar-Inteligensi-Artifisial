@@ -1,74 +1,112 @@
 <!DOCTYPE html>
-<!-- Halo, ini halaman utama. Isinya form config, hasil, visualisasi kapal, sama grafik. -->
-<!-- Maaf masih polos, nanti dipercantik di Tahap 4. -->
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Local Search Optimization - Penempatan Kendaraan pada Kapal</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tugas Besar IF3070 Dasar Inteligensi Artifisial</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
-  <header>
-    <h1>LOCAL SEARCH OPTIMIZATION</h1>
-    <p id="backend-status">Checking backend…</p>
+  <header class="page-header">
+    <h1>Tugas Besar IF3070 Dasar Inteligensi Artifisial</h1>
+    <span id="backend-status" class="badge" role="status">Menghubungkan server</span>
   </header>
-
   <main>
-    <section id="config">
-      <h2>Konfigurasi</h2>
-      <label>Algorithm
-        <select id="algorithm">
-          <option value="hill_climbing">Hill Climbing</option>
-          <option value="simulated_annealing">Simulated Annealing</option>
-          <option value="genetic_algorithm">Genetic Algorithm</option>
-        </select>
-      </label>
-      <label>Variant
-        <select id="variant">
-          <option value="steepest_ascent">Steepest Ascent</option>
-          <option value="stochastic">Stochastic</option>
-          <option value="sideways">Sideways Move</option>
-          <option value="random_restart">Random Restart</option>
-        </select>
-      </label>
-      <label>Objective
-        <select id="objective">
-          <option value="objective_1">ShippingFee</option>
-          <option value="objective_2">Alternatif (bonus)</option>
-        </select>
-      </label>
-      <label>Number of Ships <input id="ship-count" type="number" value="1" min="1" /></label>
-      <label>Max Iteration <input id="max-iter" type="number" value="1000" min="1" /></label>
-      <button id="run-btn">RUN OPTIMIZATION</button>
-    </section>
+    <p id="message" role="status" aria-live="polite"></p>
+    <form id="optimization-form" class="panel">
+      <fieldset id="inputs" disabled>
+        <legend>Konfigurasi</legend>
+        <div class="data-toolbar">
+          <button type="button" id="sample-button">Gunakan data sampel</button>
+          <label>Unggah dataset JSON<input type="file" id="problem-file" accept=".json,application/json"></label>
+        </div>
+        <details>
+          <summary>Edit dataset</summary>
+          <label>Data permasalahan<textarea id="problem" rows="10" spellcheck="false" required></textarea></label>
+        </details>
+        <div class="form-grid algorithm-grid">
+          <label>Algoritma<select id="algorithm"></select></label>
+          <label>Objective<select id="objective"></select></label>
+        </div>
+        <div id="parameters" class="form-grid"></div>
+        <div class="form-grid seed-grid">
+          <label>Seed<select id="seed-mode"><option value="random" selected>Acak</option><option value="manual">Manual</option></select></label>
+          <label id="initial-seed-field" hidden>Seed Initial State<input id="seed" type="number" min="0" step="1" value="42" required disabled></label>
+          <label id="algorithm-seed-field" hidden>Seed algoritma<input id="algorithm-seed" type="number" min="0" step="1" value="43" required disabled></label>
+        </div>
+        <button type="submit" class="primary">Jalankan optimasi</button>
+      </fieldset>
+    </form>
 
-    <section id="results">
-      <h2>RESULTS</h2>
-      <div>Objective Value: <span id="objective-value">-</span></div>
-      <div>Iteration: <span id="iteration">-</span></div>
-      <div>Duration: <span id="duration">-</span></div>
-    </section>
-
-    <section id="initial-state">
-      <h2>INITIAL STATE</h2>
-      <div id="initial-viz" class="ship-viz">Ship Visualization</div>
-    </section>
-
-    <section id="final-state">
-      <h2>FINAL STATE</h2>
-      <div id="final-viz" class="ship-viz">Ship Visualization</div>
-    </section>
-
-    <section id="chart-section">
-      <h2>OBJECTIVE VS ITERATION</h2>
-      <canvas id="chart">Chart</canvas>
+    <section id="result-section" hidden>
+      <div class="section-heading">
+        <h2>Hasil optimasi</h2>
+        <button type="button" id="download-result">Unduh JSON</button>
+      </div>
+      <p id="result-status" role="status"></p>
+      <div id="metrics" class="metrics"></div>
+      <section class="panel">
+        <h3>Statistik</h3>
+        <dl id="statistics" class="value-grid"></dl>
+      </section>
+      <div class="state-comparison">
+        <section class="panel">
+          <h3 id="initial-state-heading">Initial State</h3>
+          <p id="initial-value"></p>
+          <div id="initial-state"></div>
+        </section>
+        <section class="panel">
+          <h3>Final State</h3>
+          <p id="final-value"></p>
+          <div id="final-state"></div>
+        </section>
+      </div>
+      <section class="panel">
+        <div class="section-heading">
+          <h3 id="history-heading">Objective terhadap iterasi</h3>
+          <button type="button" id="download-chart">Unduh PNG</button>
+        </div>
+        <p id="history-legend" class="chart-legend"></p>
+        <canvas id="chart" aria-label="Grafik objective"></canvas>
+      </section>
+      <section id="restart-section" class="panel" hidden>
+        <h3>Hasil per pencarian</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Pencarian</th><th>Seed</th><th>Iterasi</th><th>Objective awal</th><th>Objective akhir</th></tr></thead>
+            <tbody id="restart-summary"></tbody>
+          </table>
+        </div>
+        <div class="section-heading restart-controls">
+          <label>Grafik pencarian<select id="restart-search"></select></label>
+          <button type="button" id="download-restart-chart">Unduh PNG</button>
+        </div>
+        <canvas id="restart-chart" aria-label="Objective terhadap iterasi dalam satu pencarian"></canvas>
+      </section>
+      <section id="diagnostics-section" class="panel" hidden>
+        <div class="section-heading">
+          <h3>Analisis Simulated Annealing</h3>
+          <button type="button" id="download-sa-analysis">Unduh PNG</button>
+        </div>
+        <h4>Probabilitas penerimaan</h4>
+        <canvas id="acceptance-chart" aria-label="Probabilitas penerimaan min(1, exp(ΔE/T)) terhadap iterasi"></canvas>
+        <h4 class="chart-subheading">Temperatur setelah iterasi</h4>
+        <canvas id="temperature-chart" aria-label="Temperatur setelah iterasi SA, termasuk temperatur awal pada iterasi nol"></canvas>
+        <details id="sa-analysis-extra">
+          <summary>Grafik tambahan</summary>
+          <div class="section-heading">
+            <label>Grafik<select id="diagnostic-metric">
+              <option value="temperature_history">Temperatur</option>
+              <option value="log_e_deltaet_history">ΔE / T</option>
+              <option value="e_deltaet_history">exp(ΔE/T)</option>
+            </select></label>
+            <button type="button" id="download-diagnostic">Unduh PNG</button>
+          </div>
+          <canvas id="diagnostic-chart" aria-label="Grafik diagnostik SA terhadap iterasi"></canvas>
+        </details>
+      </section>
     </section>
   </main>
-
-  <script src="js/api.js"></script>
-  <script src="js/visualization.js"></script>
-  <script src="js/charts.js"></script>
-  <script src="js/app.js"></script>
+  <script type="module" src="/assets/js/app.js"></script>
 </body>
 </html>

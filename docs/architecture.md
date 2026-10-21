@@ -1,68 +1,53 @@
-# Arsitektur dan kontrak problem core
+# Arsitektur
 
-Kode Python ada di `src/`. `src/core/` menyediakan representasi masalah untuk
-algoritma di `src/algorithms/`. Service di `src/services/` menghubungkan algoritma
-dengan API Flask di `src/app.py`. Visualisasi web tetap ada di `frontend/`.
+Aplikasi menggunakan Python/Flask untuk pencarian dan API, serta HTML, CSS, dan JavaScript untuk visualisasi. Frontend disajikan oleh Flask dan tidak membutuhkan proses build.
 
-## Data masalah
+## Komponen
 
-- `Vehicle(id, width, length, shipping_fee, weight, eta)` menyimpan ukuran dalam
-  satuan grid. `weight` memakai satuan kapasitas pada data soal.
-- `Ship(id, width, length, max_capacity)` menyimpan ukuran geladak dan batas
-  total berat kendaraan.
-- `Placement(vehicle_id, ship_id, x, y, orientation)` menyimpan sel kiri atas
-  kendaraan. `orientation` bernilai `horizontal` atau `vertical`.
-- `State(ships, vehicles)` menyimpan `ships` sebagai daftar `ShipState` dan
-  `vehicles` sebagai kamus berdasarkan ID. Kendaraan tanpa placement tetap
-  tercatat di `vehicles` dan bisa dilihat lewat `outside_vehicle_ids`.
+| Komponen | Tanggung jawab |
+|---|---|
+| `src/core/` | Kendaraan, kapal, placement, state, constraint, objective, dan neighbor. |
+| `src/algorithms/` | Pencarian dan pengumpulan history numerik. |
+| `src/services/optimization.py` | Registry parameter, validasi konfigurasi, inisialisasi, pemanggilan algoritma, dan penjelasan hasil. |
+| `src/services/validation.py` | Validasi tipe, nilai terbatas, dan batas numerik parameter. |
+| `src/services/serialization.py` | Konversi State ke JSON, statistik solusi, dan normalisasi nilai non-finite. |
+| `src/app.py` | Frontend dan endpoint API. |
+| `frontend/js/app.js` | Form dataset, parameter, seed, request optimasi, dan status. |
+| `frontend/js/result-view.js` | Ringkasan hasil, initial state, solusi terbaik, dan grafik. |
+| `frontend/js/visualization.js` | Penggambaran geladak dan ekspor SVG. |
+| `frontend/js/charts.js` | Grafik history, pencarian Random Restart, dan diagnostik SA pada Canvas. |
+| `frontend/js/results.js` | Seri grafik dan label iterasi/generasi. |
+| `frontend/js/ui.js` | Elemen form, format angka, daftar nilai, dan unduhan. |
 
-Koordinat dimulai dari nol. Nilai x bertambah ke kanan dan y bertambah ke bawah.
-Kendaraan yang diangkut harus berada sepenuhnya di dalam geladak. Kendaraan
-yang tidak diangkut tidak memiliki placement sama sekali.
+## Representasi
 
-## Pemakaian core
+`Vehicle` menyimpan ID, width, length, ShippingFee, weight, dan ETA. `Ship` menyimpan ID, ukuran geladak, dan kapasitas berat. Keduanya merupakan dataclass frozen.
 
-```python
-from src.core.constraint import is_valid
-from src.core.neighbor import generate_neighbors
-from src.core.objective import objective_1
-from src.core.state import create_initial_state, load_problem
+`Placement` menyimpan kendaraan, kapal, koordinat integer x/y, serta orientasi. Koordinat menunjuk sel kiri atas. Orientasi horizontal memakai dimensi asli; vertical menukar width dan length.
 
-problem = load_problem("data/sample/small.json")
-initial_state = create_initial_state(
-    [item.ship for item in problem.ships], list(problem.vehicles.values()), seed=42
-)
-assert is_valid(initial_state)
-print(objective_1(initial_state))
-print(initial_state.to_dict())
-neighbors = generate_neighbors(initial_state)
-```
+`State` menyimpan daftar `ShipState` dan kamus kendaraan. Kendaraan yang tidak diangkut tidak memiliki placement dan tersedia melalui `outside_vehicle_ids`. `deck_grid()` membentuk grid; `copy()` membuat salinan terpisah.
 
-`generate_neighbors` memberi state baru yang valid lewat operasi tukar,
-pindah ke koordinat lain, dan putar. Kendaraan di luar dapat ditukar dengan
-kendaraan di kapal atau dipindahkan ke suatu koordinat di geladak. Mengeluarkan
-kendaraan tanpa pertukaran bukan satu langkah neighbor. State asal tidak berubah.
-`random_neighbor` memilih satu
-dari hasil tersebut dan menerima generator angka acak opsional untuk eksperimen.
-`State.copy()` membuat salinan yang dapat diubah secara mandiri.
+`is_valid()` memeriksa referensi, keunikan placement, batas geladak, overlap, dan kapasitas per kapal. `objective_1()` menjumlahkan ShippingFee kendaraan yang dimuat pada state valid.
 
-`State.from_dict(data)` menerima `vehicles` dan `ships`. Setiap kapal bisa
-langsung ditulis dengan atribut kapal, atau memakai objek `ship` beserta
-`placements`. Kedua bentuk menerima `placements` sebagai daftar opsional.
-`load_problem(path)` membaca format ini dari JSON. Fungsi
-`create_initial_state(ships, vehicles, seed)` membuat penempatan awal acak;
-kendaraan yang tidak berhasil ditempatkan tetap berada di luar.
+`generate_neighbors()` menghasilkan pertukaran kendaraan, perpindahan koordinat, dan perubahan orientasi. Kendaraan di luar dapat dimuat atau ditukar dengan kendaraan di dalam. Pengeluaran kendaraan tanpa pertukaran tidak disediakan sebagai langkah tersendiri. Kandidat divalidasi dan dideduplikasi.
 
-`is_valid(state)` memeriksa referensi ID, satu penempatan per kendaraan,
-batas geladak, sel yang bertumpuk, dan jumlah berat per kapal. `objective_1`
-menghitung jumlah ShippingFee kendaraan yang diangkut, dan menolak state tidak
-valid. `State.to_dict()` menyediakan daftar kendaraan, kapal, placement, grid,
-kendaraan di luar, dan nilai untuk API atau visualisasi.
+`_possible_moves()` menyusun usulan perubahan placement, lalu `_apply_move()` membentuk State kandidat. `random_neighbor()` mengacak daftar usulan dan berhenti pada kandidat valid pertama, tanpa memanggil enumerasi semua state dari `generate_neighbors()`. State valid tanpa kandidat menghasilkan `NoNeighborError`. Stochastic HC menggunakan jalur ini; SA dan mutasi GA tetap memakai generator seluruh neighbor melalui kontrak algoritma asalnya.
 
-## Kontrak algoritma
+## Alur satu pencarian
 
-Algoritma menerima State, fungsi objective, pembuat neighbor, dan parameter.
-Hasilnya disepakati berisi `best_state`, `best_value`, `history`, `iterations`,
-dan `duration`. Steepest Ascent juga menyertakan `initial_state` dan
-`final_state`; keduanya berupa objek `State`, dan `final_state` adalah solusi
-terbaik. Integrasi service merupakan tahap berikutnya.
+1. API menerima dataset, algoritma, parameter, dan seed.
+2. Service memvalidasi input dan membentuk initial state atau populasi awal.
+3. Service memanggil algoritma dengan kontrak dari branch sumbernya.
+4. Algoritma mengembalikan solusi, objective, history, jumlah langkah, dan durasi.
+5. Service menambahkan konfigurasi, statistik solusi, serta penjelasan penghentian, lalu menyerialisasi hasil.
+6. Frontend menggambar initial state, solusi terbaik, dan grafik. Unduhan dibuat dari hasil yang diterima browser.
+
+Stochastic HC, Sideways, SA, dan GA menggunakan seed algoritma yang terpisah dari seed inisialisasi. Registry capabilities menandai kebutuhan seed ini melalui `uses_algorithm_seed`. GA membentuk seed individu melalui generator lokal; ukuran populasi yang lebih besar memperpanjang urutan seed dengan prefix konsisten.
+
+Random Restart menerima factory yang menyediakan `maximum_restart + 1` initial state yang disiapkan service. Seed dimulai dari seed initial state dan bertambah satu per pencarian. Serialisasi meneruskan history dan jumlah iterasi per pencarian; frontend menampilkan tabel serta grafik lokal terpisah dari best-so-far global. Nilai form disimpan per ID algoritma.
+
+`duration` berasal langsung dari algoritma. Pembentukan kondisi awal diukur terpisah sebagai `initialization_duration`, termasuk seluruh initial state Random Restart. Serialisasi respons dan penggambaran browser bukan bagian durasi pencarian.
+
+## Referensi implementasi
+
+Seluruh modul HC serta `src/core/neighbor.py` berasal dari `origin/feature/hc-chia-fix` commit `6e74807`. Perubahan neighbor berasal dari commit core `062caa8`. SA dan GA berasal dari `origin/feature/metaheuristic` commit `6b13b2f`. Kebutuhan API dan visualisasi ditangani di luar algoritma. Perubahan urutan enumerasi core dapat mengubah hasil seeded dibanding versi core sebelumnya; reproduksibilitas diperiksa dengan kode dan lingkungan yang sama.
