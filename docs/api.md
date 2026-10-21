@@ -8,7 +8,7 @@ API disajikan oleh Flask pada origin yang sama dengan frontend. Request POST men
 | `GET /api/health` | Status koneksi server. |
 | `GET /api/capabilities` | Algoritma, objective, schema parameter, dan nilai default. |
 | `GET /api/sample` | Dataset contoh. |
-| `POST /api/optimize` | Menjalankan satu pencarian dan mengembalikan hasil lengkap. |
+| `POST /api/optimize` | Menjalankan satu pencarian, menyimpan JSON/grafik ke `output/`, dan mengembalikan hasil lengkap. |
 
 ## Request
 
@@ -95,6 +95,7 @@ Tambahkan `problem` seperti pada contoh request lengkap. Konfigurasi ini membent
 | `statistics` | Total ShippingFee aktual (`total_shipping_fee`), jumlah kendaraan dimuat/di luar, serta statistik per kapal. Setiap kapal memuat `shipping_fee`, `max_eta` (hari; `null` jika kosong), berat muatan, kapasitas, dan utilisasi geladak. |
 | `configuration` | Parameter dan seed yang digunakan. |
 | `stop_reason` | Penjelasan service mengenai kondisi penghentian. |
+| `output` | Status penyimpanan otomatis dan lokasi file hasil/grafik. |
 
 State JSON menyertakan kendaraan, kapal, placement, grid, kendaraan di luar, dan `value` sesuai objective terpilih pada `configuration.objective`. Untuk bonus, `value` merupakan skor efisiensi, bukan total ShippingFee; pendapatan aktual tersedia pada `statistics.total_shipping_fee`. `stop_reason` dihitung service dari ringkasan hasil/history: `no_improvement`, `min_temperature`, `no_neighbors`, `max_iterations`, `max_sideways_moves`, `no_admissible_move`, atau `max_restarts`. Stochastic tidak dihentikan atau dilabeli berhenti hanya karena satu percobaan tidak membaik. Implementasi algoritma tidak memerlukan parameter tambahan untuk integrasi web.
 
@@ -103,6 +104,25 @@ Metrik SA memuat `stuck_count`, `accept_worse`, `temperature_history`, `e_deltae
 Metrik Sideways memuat `sideways_moves` dan `maximum_sideways_move`. Penghitungan bersifat kumulatif, bukan hanya rentetan perpindahan setara terakhir.
 
 Metrik Random Restart memuat `restarts`, `iterations_per_restart`, dan `history_per_restart`. Indeks nol mengacu pada pencarian awal. Jumlah pencarian adalah `restarts + 1`; jumlah langkah setiap history adalah iterasi pencarian tersebut ditambah satu. `configuration.restart_seeds` mencatat seed dengan indeks yang sama. Solusi terbaik berasal dari maksimum objective akhir seluruh pencarian. `history` agregat tidak menunjukkan objective aktual state setelah restart; gunakan `history_per_restart` untuk itu.
+
+### Penyimpanan otomatis
+
+Setelah optimasi berhasil, backend menyimpan JSON dan PNG tanpa request tambahan. Nama unik memuat waktu UTC, algoritma, dan ID acak. Contoh metadata (run-id disingkat):
+
+```json
+{
+  "output": {
+    "status": "saved",
+    "run_id": "<run-id>",
+    "result": "output/results/<run-id>.json",
+    "plots": ["output/plots/<run-id>-objective.png"]
+  }
+}
+```
+
+Path menunjuk file lokal di server, relatif terhadap root repository; bukan URL unduhan. JSON yang tersimpan memuat respons lengkap termasuk metadata ini. Setiap algoritma menyimpan grafik objective, GA dengan rata-rata populasi. SA menambahkan `<run-id>-sa-analysis.png` berisi probabilitas penerimaan dan temperatur. Random Restart menambahkan `<run-id>-restart-<n>.png` untuk setiap pencarian, termasuk pencarian awal (`n = 0`). `duration` dan `initialization_duration` tidak mencakup penyimpanan atau rendering grafik.
+
+Jika penyimpanan gagal, API tetap mengembalikan HTTP 200 dengan hasil optimasi `status: "success"`, tetapi `output` berisi `status: "error"` dan `message`. Frontend menampilkan pesan tersebut dan tetap menyediakan unduhan. Detail kegagalan dicatat ke log server. File parsial dari run yang gagal dibersihkan jika filesystem mengizinkan; hasil run lain tetap dipertahankan. Request tidak valid tidak menghasilkan file output.
 
 ## Kesalahan
 

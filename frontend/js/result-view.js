@@ -34,6 +34,11 @@ export class ResultView {
     $("result-section").hidden = false;
     $("result-objective").textContent = `Objective: ${objectiveLabel}`;
     $("result-status").textContent = stopLabels[result.stop_reason];
+    const output = result.output;
+    $("output-status").textContent = output?.status === "saved"
+      ? `Tersimpan otomatis: ${output.result}. ${output.plots.length} grafik PNG di output/plots/.`
+      : output?.message || "";
+    $("output-status").classList.toggle("error", output?.status === "error");
     const entries = [
       ["Objective terbaik", number(result.objective_value)],
       ["Objective awal", number(result.history[0])],

@@ -58,7 +58,7 @@ def test_api_serves_frontend_and_supported_optimization_contract():
     assert set(response.get_json()) == {
         "status", "objective_value", "iterations", "duration", "initial_state", "final_state",
         "history", "best_history", "mean_history", "metrics", "initialization_duration",
-        "algorithm", "step_type", "stop_reason", "statistics", "configuration",
+        "algorithm", "step_type", "stop_reason", "statistics", "configuration", "output",
     }
 
 

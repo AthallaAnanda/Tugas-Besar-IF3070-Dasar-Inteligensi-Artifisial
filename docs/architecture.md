@@ -11,6 +11,7 @@ Aplikasi menggunakan Python/Flask untuk pencarian dan API, serta HTML, CSS, dan 
 | `src/services/optimization.py` | Registry parameter, validasi konfigurasi, inisialisasi, pemanggilan algoritma, dan penjelasan hasil. |
 | `src/services/validation.py` | Validasi tipe, nilai terbatas, dan batas numerik parameter. |
 | `src/services/serialization.py` | Konversi State ke JSON, statistik solusi, dan normalisasi nilai non-finite. |
+| `src/services/output.py` | Penyimpanan JSON dan pembuatan grafik PNG per run menggunakan Matplotlib Agg tanpa GUI. |
 | `src/app.py` | Frontend dan endpoint API. |
 | `frontend/js/app.js` | Form dataset, parameter, seed, request optimasi, dan status. |
 | `frontend/js/result-view.js` | Ringkasan hasil, initial state, solusi terbaik, dan grafik. |
@@ -40,13 +41,16 @@ Aplikasi menggunakan Python/Flask untuk pencarian dan API, serta HTML, CSS, dan 
 3. Service memanggil algoritma dengan kontrak dari branch sumbernya.
 4. Algoritma mengembalikan solusi, objective, history, jumlah langkah, dan durasi.
 5. Service menambahkan konfigurasi, statistik solusi, serta penjelasan penghentian, lalu menyerialisasi hasil.
-6. Frontend menggambar initial state, solusi terbaik, dan grafik. Unduhan dibuat dari hasil yang diterima browser.
+6. API memanggil service output untuk menyimpan grafik PNG dan JSON lengkap dengan metadata lokasi file.
+7. Frontend menggambar initial state, solusi terbaik, grafik, serta status penyimpanan. Unduhan dibuat dari hasil yang diterima browser.
+
+Direktori output ditetapkan melalui `app.config["OUTPUT_DIR"]`, default `<root repository>/output`. Setiap run menggunakan waktu UTC dan ID acak untuk nama unik. Grafik menggunakan `Figure` dan `FigureCanvasAgg` tanpa state global `pyplot`; rendering dilindungi lock untuk request bersamaan. JSON dipublikasikan melalui rename file sementara setelah seluruh grafik selesai. Jika gagal, service membersihkan file run tersebut dan API mengembalikan hasil optimasi dengan metadata kegagalan penyimpanan. Pemanggilan langsung `run_optimization()` tetap hanya menghitung hasil. Pengujian service/API memakai direktori output sementara.
 
 Stochastic HC, Sideways, SA, dan GA menggunakan seed algoritma yang terpisah dari seed inisialisasi. Registry capabilities menandai kebutuhan seed ini melalui `uses_algorithm_seed`. GA membentuk seed individu melalui generator lokal; ukuran populasi yang lebih besar memperpanjang urutan seed dengan prefix konsisten.
 
 Random Restart menerima factory yang menyediakan `maximum_restart + 1` initial state yang disiapkan service. Seed dimulai dari seed initial state dan bertambah satu per pencarian. Serialisasi meneruskan history dan jumlah iterasi per pencarian; frontend menampilkan tabel serta grafik lokal terpisah dari best-so-far global. Nilai form disimpan per ID algoritma.
 
-`duration` berasal langsung dari algoritma. Pembentukan kondisi awal diukur terpisah sebagai `initialization_duration`, termasuk seluruh initial state Random Restart. Serialisasi respons dan penggambaran browser bukan bagian durasi pencarian.
+`duration` berasal langsung dari algoritma. Pembentukan kondisi awal diukur terpisah sebagai `initialization_duration`, termasuk seluruh initial state Random Restart. Serialisasi, penyimpanan file, serta penggambaran grafik backend/browser bukan bagian durasi pencarian.
 
 ## Referensi implementasi
 

@@ -32,7 +32,7 @@ Buka **http://127.0.0.1:5000/** melalui browser.
 2. Pilih algoritma, objective, mode seed **Acak** atau **Manual**, dan parameter pencarian.
 3. Klik **Jalankan optimasi**.
 4. Periksa initial state, solusi terbaik, nilai objective, jumlah langkah, durasi, dan statistik algoritma.
-5. Unduh hasil JSON, grafik PNG, atau visualisasi state SVG jika diperlukan.
+5. Hasil JSON dan grafik PNG otomatis disimpan ke `output/`. Lokasi JSON ditampilkan pada hasil pencarian. Hasil JSON, grafik PNG, atau visualisasi state SVG juga dapat diunduh melalui browser.
 
 Mode **Acak** adalah default. Setiap eksekusi meminta seed initial state dan seed algoritma baru dari backend. Mode **Manual** menampilkan input seed untuk mengulang run tertentu atau menentukan seed pengulangan secara terkontrol. Nilai manual dipertahankan ketika berganti mode. Seed aktual selalu dicatat pada `configuration.seed` dan `configuration.algorithm_seed` dalam unduhan JSON.
 
@@ -47,6 +47,30 @@ Random Restart menerima **Maksimum iterasi per pencarian** dan **Maksimum restar
 Pada GA, visualisasi awal adalah individu terbaik populasi awal. Grafik menampilkan maksimum dan rata-rata populasi serta nilai terbaik sepanjang pencarian. Solusi terbaik dapat berbeda dari individu terbaik generasi terakhir jika elitisme dinonaktifkan.
 
 Pada SA, panel analisis menampilkan grafik probabilitas penerimaan `min(1, exp(ΔE/T))` berwarna merah dan temperatur setelah iterasi berwarna oranye. Keduanya dapat diunduh dalam satu PNG. Bagian **Grafik tambahan** menyediakan eksponen dan faktor eksponensial mentah untuk analisis lebih lanjut.
+
+## Penyimpanan hasil otomatis
+
+Setiap request optimasi yang berhasil melalui aplikasi atau `POST /api/optimize` menyimpan:
+
+```text
+output/
+├── results/
+│   └── <run-id>.json
+└── plots/
+    ├── <run-id>-objective.png
+    ├── <run-id>-sa-analysis.png       # khusus SA
+    └── <run-id>-restart-<n>.png       # khusus Random Restart
+```
+
+`run-id` memuat waktu UTC, ID algoritma, dan ID acak agar run berulang memiliki file berbeda. Indeks restart 0 adalah pencarian awal. Folder dibuat otomatis relatif terhadap root repository, bukan direktori terminal saat program dijalankan.
+
+JSON menyimpan hasil lengkap yang sama dengan respons API: state awal/terbaik, statistik, history, konfigurasi, seed aktual, serta metadata `output` berisi lokasi file. Grafik objective GA mencakup maksimum dan rata-rata populasi serta best-so-far. SA menambahkan satu PNG berisi probabilitas penerimaan dan temperatur; Random Restart menambahkan grafik setiap pencarian.
+
+Grafik dibuat di backend menggunakan Matplotlib tanpa GUI. Perbarui dependensi dengan `python -m pip install -r requirements.txt` jika memakai virtual environment lama. Waktu penyimpanan/pembuatan grafik tidak masuk ke durasi pencarian. Pemanggilan langsung `run_optimization()` hanya menghitung hasil; penyimpanan otomatis diintegrasikan pada endpoint API.
+
+Jika penyimpanan gagal, hasil optimasi tetap ditampilkan dan dapat diunduh, disertai pesan kegagalan. Detail kesalahan tersedia pada log server.
+
+Isi `output/results/` dan `output/plots/` diabaikan Git. Untuk menyertakan hasil eksperimen terpilih pada pengumpulan, gunakan `git add -f` dengan path file yang dipilih, misalnya `git add -f output/results/<run-id>.json output/plots/<run-id>-objective.png`.
 
 ## Objective bonus
 
@@ -70,7 +94,7 @@ Seluruh algoritma dapat memakai kedua objective. Nilai pada state, grafik, dan u
 | `src/app.py` | Server Flask dan API optimasi. |
 | `frontend/` | HTML, CSS, dan JavaScript tanpa proses build. |
 | `data/sample/` | Dataset contoh. |
-| `output/` | Direktori untuk hasil program yang disimpan secara manual. |
+| `output/` | Hasil JSON dan grafik PNG yang disimpan otomatis per run. |
 | `tests/` | Pengujian core, algoritma, service, dan frontend. |
 | `docs/` | Dokumentasi teknis dan panduan pengujian. |
 

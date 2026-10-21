@@ -41,3 +41,11 @@ Jalankan `python -m src.app`, lalu buka `http://127.0.0.1:5000/`.
 2. Unduh grafik objective dan diagnostik sebagai PNG. Tombol utama pada analisis SA menghasilkan satu PNG berisi grafik probabilitas dan temperatur. Uji SA nol iterasi: temperatur awal tersedia dan probabilitas menjelaskan bahwa belum ada kandidat yang dievaluasi.
 3. Unduh state sebagai SVG dan buka berkasnya.
 4. Periksa desktop dan layar 390 px. Label, form, statistik, serta visualisasi tetap terbaca tanpa membuat halaman melebar.
+
+## Penyimpanan otomatis
+
+1. Jalankan optimasi dan periksa pesan **Tersimpan otomatis** beserta path JSON pada halaman hasil. Buka JSON di `output/results/` dan grafik objective di `output/plots/`; konfigurasi, seed, history, serta statistik harus sama dengan unduhan browser.
+2. Ulangi konfigurasi dan seed yang sama. Nama file harus berbeda dan hasil run sebelumnya tetap tersedia.
+3. Jalankan SA, termasuk nol iterasi. PNG `-sa-analysis.png` berisi probabilitas penerimaan dan temperatur; saat nol iterasi, tidak ada probabilitas buatan. Jalankan GA nol generasi dan periksa grafik satu titik.
+4. Jalankan Random Restart dengan maksimum dua restart. Tersimpan satu grafik objective global dan tiga grafik `-restart-0.png` sampai `-restart-2.png`.
+5. Kirim input tidak valid. Tidak ada file hasil baru. Pada lingkungan uji dengan folder output tidak bisa ditulis, hasil optimasi tetap tampil dan bisa diunduh, pesan kegagalan penyimpanan terlihat, dan log server mencatat detailnya.

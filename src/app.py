@@ -4,6 +4,7 @@ from flask import Flask, jsonify, request
 from werkzeug.exceptions import BadRequest, UnsupportedMediaType
 
 from src.services.optimization import capabilities, run_optimization
+from src.services.output import save_output
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,6 +15,7 @@ app = Flask(
     static_url_path="/assets",
 )
 app.json.sort_keys = False
+app.config["OUTPUT_DIR"] = ROOT / "output"
 
 
 @app.get("/")
@@ -53,7 +55,17 @@ def request_body():
 
 @app.post("/api/optimize")
 def optimize():
-    return jsonify(run_optimization(request_body()))
+    result = run_optimization(request_body())
+    try:
+        result = save_output(result, app.config["OUTPUT_DIR"])
+    except Exception:
+        app.logger.exception("Gagal menyimpan hasil optimasi")
+        result["output"] = {
+            "status": "error",
+            "message": "Hasil optimasi berhasil dihitung, tetapi penyimpanan otomatis gagal. "
+                       "Periksa folder output dan log server; hasil masih dapat diunduh.",
+        }
+    return jsonify(result)
 
 
 @app.errorhandler(ValueError)

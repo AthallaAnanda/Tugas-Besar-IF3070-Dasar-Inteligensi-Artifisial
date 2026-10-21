@@ -32,7 +32,12 @@ try {
       page.locator('#optimization-form button[type="submit"]').click()
     ]);
     await page.waitForFunction(() => !document.getElementById("inputs").disabled);
-    return { response, result: await response.json() };
+    const result = await response.json();
+    if (response.ok()) {
+      assert.equal(result.output.status, "saved");
+      assert.ok((await page.locator("#output-status").innerText()).includes(result.output.result));
+    }
+    return { response, result };
   }
 
   await page.locator('#parameters [data-parameter="max_iterations"]').fill("2");

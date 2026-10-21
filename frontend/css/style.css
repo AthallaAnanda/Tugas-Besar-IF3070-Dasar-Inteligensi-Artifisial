@@ -67,7 +67,9 @@ th { font-size: 0.9rem; }
 .restart-controls label { flex: 1 1 200px; max-width: 380px; }
 #result-status { padding: 12px 16px; border-left: 3px solid #176857; background: #e0f2ee; border-radius: 5px; }
 #result-section { scroll-margin-top: 24px; }
-#message.error { color: #b42318; }
+#output-status { overflow-wrap: anywhere; }
+#message.error, #output-status.error { color: #b42318; }
+#output-status:empty { display: none; }
 #message:empty { display: none; }
 :focus-visible { outline: 3px solid #38a5ce; outline-offset: 3px; }
 [hidden] { display: none !important; }
