@@ -27,7 +27,7 @@ Aplikasi menggunakan Python/Flask untuk pencarian dan API, serta HTML, CSS, dan 
 
 `State` menyimpan daftar `ShipState` dan kamus kendaraan. Kendaraan yang tidak diangkut tidak memiliki placement dan tersedia melalui `outside_vehicle_ids`. `deck_grid()` membentuk grid; `copy()` membuat salinan terpisah.
 
-`is_valid()` memeriksa referensi, keunikan placement, batas geladak, overlap, dan kapasitas per kapal. `objective_1()` menjumlahkan ShippingFee kendaraan yang dimuat pada state valid.
+`is_valid()` memeriksa referensi, keunikan placement, batas geladak, overlap, dan kapasitas per kapal. `objective_1()` menjumlahkan ShippingFee kendaraan yang dimuat pada state valid. `objective_2()` menjumlahkan skor efisiensi pendapatan–waktu–berat per kapal. Service memilih fungsi dari registry `OBJECTIVES` dan meneruskannya ke algoritma serta serialisasi state agar seluruh nilai hasil konsisten. `State.to_dict()` tanpa argumen tetap memakai objective utama. Rumus bonus dijelaskan di [dokumentasi objective](objective.md).
 
 `generate_neighbors()` menghasilkan pertukaran kendaraan, perpindahan koordinat, dan perubahan orientasi. Kendaraan di luar dapat dimuat atau ditukar dengan kendaraan di dalam. Pengeluaran kendaraan tanpa pertukaran tidak disediakan sebagai langkah tersendiri. Kandidat divalidasi dan dideduplikasi.
 

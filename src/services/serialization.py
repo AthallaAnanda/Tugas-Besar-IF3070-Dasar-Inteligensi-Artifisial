@@ -13,7 +13,7 @@ def json_safe(value):
     return value
 
 
-def serialize_result(result):
+def serialize_result(result, objective_function=None):
     initial = result["initial_state"]
     best = result["best_state"]
 
@@ -56,8 +56,8 @@ def serialize_result(result):
         "objective_value": result["best_value"],
         "iterations": result["iterations"],
         "duration": result["duration"],
-        "initial_state": initial.to_dict(),
-        "final_state": best.to_dict(),
+        "initial_state": initial.to_dict(objective_function),
+        "final_state": best.to_dict(objective_function),
         "history": history,
         "best_history": best_history,
         "mean_history": list(result["mean_history"]) if "mean_history" in result else None,
@@ -84,6 +84,8 @@ def state_statistics(state: State):
         ships.append({
             "ship_id": item.ship.id,
             "loaded_count": len(vehicles),
+            "shipping_fee": sum(vehicle.shipping_fee for vehicle in vehicles),
+            "max_eta": max((vehicle.eta for vehicle in vehicles), default=None),
             "weight": sum(vehicle.weight for vehicle in vehicles),
             "max_capacity": item.ship.max_capacity,
             "occupied_area": occupied_area,
@@ -92,6 +94,7 @@ def state_statistics(state: State):
         })
 
     return {
+        "total_shipping_fee": sum(item["shipping_fee"] for item in ships),
         "loaded_count": sum(item["loaded_count"] for item in ships),
         "outside_count": len(state.outside_vehicle_ids),
         "ships": ships,

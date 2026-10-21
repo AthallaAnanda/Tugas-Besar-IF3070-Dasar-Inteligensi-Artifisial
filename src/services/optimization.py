@@ -6,7 +6,7 @@ from src.algorithms.genetic_algorithm import genetic_algorithm
 from src.algorithms.hill_climbing import random_restart, sideways_move, steepest_ascent, stochastic_hill_climbing
 from src.algorithms.simulated_annealing import simulated_annealing
 from src.core.neighbor import generate_neighbors
-from src.core.objective import objective_1
+from src.core.objective import OBJECTIVES
 from src.core.state import State, create_initial_state
 from src.services.serialization import json_safe, serialize_result, state_statistics
 from src.services.validation import validate_fields
@@ -103,7 +103,18 @@ def capabilities():
             {
                 "id": "objective_1",
                 "label": "Total ShippingFee",
-            }
+                "description": "Memaksimalkan total tarif pengiriman kendaraan yang diangkut (juta rupiah).",
+            },
+            {
+                "id": "objective_2",
+                "label": "Efisiensi Pendapatan–Waktu–Berat",
+                "description": (
+                    "Skor per kapal = total ShippingFee / ((1 + ETA terlama) × "
+                    "(1 + total berat / kapasitas)). Skor seluruh kapal dijumlahkan. "
+                    "ETA terlama mendekati waktu penyelesaian pengiriman; "
+                    "skor ini bukan laba bersih atau pendapatan per hari aktual."
+                ),
+            },
         ],
     }
 
@@ -139,7 +150,7 @@ def prepare_optimization(config):
 
     objective = config.get("objective", "objective_1")
 
-    if objective != "objective_1":
+    if not isinstance(objective, str) or objective not in OBJECTIVES:
         raise ValueError("Objective belum tersedia")
 
     variant = ALGORITHMS[algorithm].get("variant")
@@ -175,6 +186,7 @@ def prepare_optimization(config):
 def run_optimization(config):
     problem, configuration = prepare_optimization(config)
     algorithm = configuration["algorithm"]
+    objective_function = OBJECTIVES[configuration["objective"]]
     parameters = configuration["parameters"]
     initial_seed = configuration["seed"]
     algorithm_seed = configuration["algorithm_seed"]
@@ -206,13 +218,13 @@ def run_optimization(config):
         execution_parameters["seed"] = algorithm_seed
 
     if algorithm == "genetic_algorithm":
-        raw = genetic_algorithm(initial_population, objective_1, execution_parameters)
+        raw = genetic_algorithm(initial_population, objective_function, execution_parameters)
     elif algorithm == "random_restart":
-        raw = random_restart(initial_state_factory, objective_1, generate_neighbors, execution_parameters)
+        raw = random_restart(initial_state_factory, objective_function, generate_neighbors, execution_parameters)
     else:
-        raw = FUNCTIONS[algorithm](initial, objective_1, generate_neighbors, execution_parameters)
+        raw = FUNCTIONS[algorithm](initial, objective_function, generate_neighbors, execution_parameters)
 
-    output = serialize_result(raw)
+    output = serialize_result(raw, objective_function)
     output["initialization_duration"] = initialization_duration
     output["algorithm"] = algorithm
     output["step_type"] = "generation" if algorithm == "genetic_algorithm" else "iteration"

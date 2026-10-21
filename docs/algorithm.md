@@ -2,6 +2,8 @@
 
 Seluruh algoritma memaksimalkan objective dengan input State valid. Algoritma mengembalikan initial state, solusi terbaik, nilai terbaik, history, jumlah langkah, dan durasi.
 
+Service meneruskan fungsi sesuai pilihan `objective_1` (total ShippingFee, default) atau `objective_2` (efisiensi pendapatan–waktu–berat) ke seluruh algoritma tanpa mengubah mekanisme pencariannya. Rumus, asumsi, dan interpretasi hasil dijelaskan pada [dokumentasi objective](objective.md).
+
 ## Steepest Ascent Hill Climbing
 
 Sumber seluruh varian HC: `origin/feature/hc-chia-fix`, commit `6e74807`. Helper internal berada di `_common.py`.

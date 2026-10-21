@@ -29,9 +29,10 @@ export class ResultView {
     window.addEventListener("resize", () => this.redraw());
   }
 
-  show(result) {
+  show(result, objectiveLabel) {
     this.result = result;
     $("result-section").hidden = false;
+    $("result-objective").textContent = `Objective: ${objectiveLabel}`;
     $("result-status").textContent = stopLabels[result.stop_reason];
     const entries = [
       ["Objective terbaik", number(result.objective_value)],
@@ -45,12 +46,15 @@ export class ResultView {
       return card;
     }));
     const statistics = [
+      ["Total ShippingFee (juta rupiah)", number(result.statistics.total_shipping_fee)],
       ["Kendaraan dimuat", result.statistics.loaded_count],
       ["Kendaraan di luar", result.statistics.outside_count],
       ["Peningkatan objective", number(result.objective_value - result.history[0])],
       ["Durasi inisialisasi", `${number(result.initialization_duration, 4)} detik`]
     ];
     for (const ship of result.statistics.ships) {
+      statistics.push([`ShippingFee ${ship.ship_id} (juta rupiah)`, number(ship.shipping_fee)]);
+      statistics.push([`ETA terlama ${ship.ship_id}`, ship.max_eta === null ? "Tidak ada muatan" : `${number(ship.max_eta, 0)} hari`]);
       statistics.push([`Utilisasi geladak ${ship.ship_id}`, `${number(ship.area_utilization * 100)}%`]);
       statistics.push([`Berat muatan ${ship.ship_id}`, `${number(ship.weight)} dari ${number(ship.max_capacity)}`]);
     }

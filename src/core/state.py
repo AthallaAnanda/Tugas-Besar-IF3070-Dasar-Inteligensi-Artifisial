@@ -44,9 +44,12 @@ class State:
                 grid[y][x] = placement.vehicle_id
         return grid
 
-    def to_dict(self):
-        """Buat data sederhana yang nanti bisa dipakai API dan visualisasi"""
-        from .objective import objective_1
+    def to_dict(self, objective_function=None):
+        """Serialisasi dengan objective terpilih; default tetap total ShippingFee."""
+        if objective_function is None:
+            from .objective import objective_1
+
+            objective_function = objective_1
 
         return {
             "vehicles": [vars(vehicle).copy() for vehicle in self.vehicles.values()],
@@ -59,7 +62,7 @@ class State:
                 for item in self.ships
             ],
             "outside_vehicle_ids": sorted(self.outside_vehicle_ids),
-            "value": objective_1(self),
+            "value": objective_function(self),
         }
 
     @classmethod

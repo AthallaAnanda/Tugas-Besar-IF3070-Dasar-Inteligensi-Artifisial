@@ -19,6 +19,11 @@ function updateSeedControls() {
   $("algorithm-seed").disabled = !manual || !available.algorithms[$("algorithm").value].uses_algorithm_seed;
 }
 
+function updateObjectiveDescription() {
+  const objective = available.objectives.find((item) => item.id === $("objective").value);
+  $("objective-description").textContent = objective.description;
+}
+
 function buildParameters() {
   const algorithm = $("algorithm").value;
   const definition = available.algorithms[algorithm];
@@ -32,6 +37,7 @@ function buildParameters() {
 $("parameters").addEventListener("input", () => parameterValues.set($("algorithm").value, readParameters($("parameters"))));
 $("algorithm").onchange = buildParameters;
 $("seed-mode").onchange = updateSeedControls;
+$("objective").onchange = updateObjectiveDescription;
 $("sample-button").onclick = async () => {
   try {
     $("problem").value = JSON.stringify(await getSample(), null, 2);
@@ -57,7 +63,8 @@ $("optimization-form").onsubmit = async (event) => {
       algorithm_seed: manualSeed ? Number($("algorithm-seed").value) : null,
       parameters: readParameters($("parameters")), problem: parseProblem($("problem"))
     });
-    optimization.show(result);
+    const objective = available.objectives.find((item) => item.id === result.configuration.objective);
+    optimization.show(result, objective.label);
     notify("");
     $("result-section").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) { notify(error.message, true); }
@@ -72,6 +79,7 @@ async function initialize() {
     $("backend-status").textContent = health.message;
     addOptions($("algorithm"), Object.entries(available.algorithms).map(([id, definition]) => [id, definition.label]));
     addOptions($("objective"), available.objectives.map((item) => [item.id, item.label]));
+    updateObjectiveDescription();
     buildParameters();
     $("problem").value = JSON.stringify(sample, null, 2);
     $("inputs").disabled = false;

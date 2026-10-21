@@ -18,6 +18,9 @@ try {
   assert.equal(await page.locator("form").count(), 1);
   assert.equal(await page.getByRole("heading", { name: "Tugas Besar IF3070 Dasar Inteligensi Artifisial", exact: true }).count(), 1);
   assert.equal(await page.locator("#algorithm option").count(), 6);
+  assert.equal(await page.locator("#objective option").count(), 2);
+  assert.equal(await page.locator("#objective").inputValue(), "objective_1");
+  assert.match(await page.locator("#objective-description").innerText(), /total tarif pengiriman/);
   assert.equal(await page.locator("#seed-mode").inputValue(), "random");
   assert.equal(await page.locator("#seed").isDisabled(), true);
   assert.equal(await page.locator("#algorithm-seed").isDisabled(), true);
@@ -219,6 +222,45 @@ try {
   assert.deepEqual(randomRestart.result.configuration.restart_seeds, [0, 1, 2].map((index) => randomRestart.result.configuration.seed + index));
   await page.locator("#restart-search").selectOption("2");
 
+  await page.locator("#objective").selectOption("objective_2");
+  assert.match(await page.locator("#objective-description").innerText(), /ETA terlama/);
+  for (const algorithm of ["hill_climbing", "stochastic_hill_climbing", "sideways_move", "random_restart", "genetic_algorithm", "simulated_annealing"]) {
+    await page.locator("#algorithm").selectOption(algorithm);
+    await page.locator('#parameters [data-parameter="max_iterations"]').fill("2");
+    const bonus = await optimize();
+    assert.equal(bonus.response.status(), 200);
+    assert.equal(bonus.response.request().postDataJSON().objective, "objective_2");
+    assert.equal(bonus.result.configuration.objective, "objective_2");
+    assert.equal(bonus.result.initial_state.value, bonus.result.history[0]);
+    assert.equal(bonus.result.final_state.value, bonus.result.objective_value);
+    const state = bonus.result.final_state;
+    let expectedScore = 0;
+    let expectedFee = 0;
+    for (const item of state.ships) {
+      const vehicles = item.placements.map((placement) => state.vehicles.find((vehicle) => vehicle.id === placement.vehicle_id));
+      if (!vehicles.length) continue;
+      const fee = vehicles.reduce((sum, vehicle) => sum + vehicle.shipping_fee, 0);
+      const weight = vehicles.reduce((sum, vehicle) => sum + vehicle.weight, 0);
+      const eta = Math.max(...vehicles.map((vehicle) => vehicle.eta));
+      expectedFee += fee;
+      expectedScore += fee / (1 + eta) / (1 + (item.ship.max_capacity ? weight / item.ship.max_capacity : 0));
+    }
+    assert.ok(Math.abs(bonus.result.objective_value - expectedScore) < 1e-9);
+    assert.equal(bonus.result.statistics.total_shipping_fee, expectedFee);
+    assert.match(await page.locator("#result-objective").innerText(), /Efisiensi Pendapatan/);
+    assert.match(await page.locator("#statistics").innerText(), /Total ShippingFee/);
+    assert.match(await page.locator("#statistics").innerText(), /ETA terlama/);
+    assert.equal(await page.locator("#chart").evaluate((canvas) => canvas.width > 0), true);
+  }
+  const [bonusDownload] = await Promise.all([page.waitForEvent("download"), page.locator("#download-result").click()]);
+  const bonusExport = JSON.parse(await readFile(await bonusDownload.path(), "utf8"));
+  assert.equal(bonusExport.configuration.objective, "objective_2");
+  assert.equal(bonusExport.final_state.value, bonusExport.objective_value);
+  await page.locator("#objective").selectOption("objective_1");
+  assert.match(await page.locator("#objective-description").innerText(), /total tarif pengiriman/);
+  assert.match(await page.locator("#result-objective").innerText(), /Efisiensi Pendapatan/);
+  await page.locator("#objective").selectOption("objective_2");
+
   if (process.env.SMOKE_SCREENSHOT) await page.screenshot({ path: process.env.SMOKE_SCREENSHOT, fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
@@ -230,7 +272,7 @@ try {
   assert.equal(await page.evaluate(() => document.body.innerText.includes(" · ") || document.body.innerText.includes("—")), false);
   assert.deepEqual([...apiPaths].sort(), ["/api/capabilities", "/api/health", "/api/optimize", "/api/sample"]);
   assert.deepEqual(errors, []);
-  console.log("Browser checks passed: stacked SA analysis and combined PNG, random/manual seeds, all six algorithms, zero limits, reproducibility, validation, exports, and mobile layout.");
+  console.log("Browser checks passed: both objectives on all six algorithms, consistent bonus exports, stacked SA analysis and combined PNG, random/manual seeds, zero limits, reproducibility, validation, exports, and mobile layout.");
 } finally {
   await browser.close();
 }

@@ -33,6 +33,7 @@ p { line-height: 1.6; }
 .panel { background: white; border: 1px solid #dae3eb; border-radius: 12px; padding: 24px; margin-bottom: 24px; min-width: 0; }
 .form-grid, .data-toolbar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-bottom: 24px; }
 .algorithm-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.objective-description { font-size: 0.9rem; color: #536976; margin: 0 0 24px; }
 .seed-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .data-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
 .data-toolbar button { min-height: 44px; }

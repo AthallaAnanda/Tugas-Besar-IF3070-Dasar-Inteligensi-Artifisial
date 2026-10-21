@@ -38,11 +38,13 @@ API disajikan oleh Flask pada origin yang sama dengan frontend. Request POST men
 
 - `problem` wajib diisi. Service membaca data melalui `State.from_dict()` lalu membentuk initial state atau populasi baru secara acak. Placement pada input harus valid, tetapi bukan titik awal pencarian.
 - `algorithm`: salah satu ID pada tabel berikut. Default `hill_climbing` menggunakan Steepest Ascent.
-- `objective`: `objective_1`, yaitu total ShippingFee.
+- `objective`: `objective_1` (default, total ShippingFee) atau `objective_2` (efisiensi pendapatan–waktu–berat). Skor bonus per kapal adalah `total ShippingFee / ((1 + ETA terlama) × (1 + total berat / kapasitas))`, lalu dijumlahkan untuk seluruh kapal. Lihat [asumsi dan kasus khusus](objective.md).
 - `seed` dan `algorithm_seed`: integer tidak negatif. Jika `seed` tidak diisi, service menghasilkan seed baru. Default `algorithm_seed` adalah `seed + 1`; nilai `null` meminta seed baru.
 - `parameters`: object sesuai schema algoritma dari `/api/capabilities`. Parameter yang tidak diisi menggunakan default. Parameter tidak dikenal ditolak.
 
 Frontend menyediakan pilihan seed **Acak** (default) dan **Manual**. Pilihan Acak mengirim `"seed": null` dan `"algorithm_seed": null` pada setiap request; kedua seed dibangkitkan secara terpisah oleh backend. Pilihan Manual mengirim nilai integer dari form. `configuration.seed` dan `configuration.algorithm_seed` pada respons/unduhan JSON selalu menyimpan nilai aktual yang digunakan, sehingga hasil acak dapat dijalankan kembali secara manual.
+
+Setiap item `objectives` pada `/api/capabilities` menyertakan `id`, `label`, dan `description`. Seluruh algoritma mendukung kedua pilihan objective.
 
 GA memvalidasi bahwa elite lebih kecil dari populasi dan tournament size tidak melebihi populasi. Seed individu populasi awal dicatat dalam `configuration.population_seeds`.
 
@@ -90,11 +92,11 @@ Tambahkan `problem` seperti pada contoh request lengkap. Konfigurasi ini membent
 | `best_history` | Objective terbaik sampai setiap langkah. |
 | `mean_history` | Rata-rata objective populasi GA; `null` pada algoritma lain. |
 | `metrics` | Statistik dan history khusus algoritma. |
-| `statistics` | Jumlah kendaraan dimuat/di luar, berat muatan, dan utilisasi geladak. |
+| `statistics` | Total ShippingFee aktual (`total_shipping_fee`), jumlah kendaraan dimuat/di luar, serta statistik per kapal. Setiap kapal memuat `shipping_fee`, `max_eta` (hari; `null` jika kosong), berat muatan, kapasitas, dan utilisasi geladak. |
 | `configuration` | Parameter dan seed yang digunakan. |
 | `stop_reason` | Penjelasan service mengenai kondisi penghentian. |
 
-State JSON menyertakan kendaraan, kapal, placement, grid, kendaraan di luar, dan nilai ShippingFee. `stop_reason` dihitung service dari ringkasan hasil/history: `no_improvement`, `min_temperature`, `no_neighbors`, `max_iterations`, `max_sideways_moves`, `no_admissible_move`, atau `max_restarts`. Stochastic tidak dihentikan atau dilabeli berhenti hanya karena satu percobaan tidak membaik. Implementasi algoritma tidak memerlukan parameter tambahan untuk integrasi web.
+State JSON menyertakan kendaraan, kapal, placement, grid, kendaraan di luar, dan `value` sesuai objective terpilih pada `configuration.objective`. Untuk bonus, `value` merupakan skor efisiensi, bukan total ShippingFee; pendapatan aktual tersedia pada `statistics.total_shipping_fee`. `stop_reason` dihitung service dari ringkasan hasil/history: `no_improvement`, `min_temperature`, `no_neighbors`, `max_iterations`, `max_sideways_moves`, `no_admissible_move`, atau `max_restarts`. Stochastic tidak dihentikan atau dilabeli berhenti hanya karena satu percobaan tidak membaik. Implementasi algoritma tidak memerlukan parameter tambahan untuk integrasi web.
 
 Metrik SA memuat `stuck_count`, `accept_worse`, `temperature_history`, `e_deltaet_history`, dan `log_e_deltaet_history`. Faktor eksponensial yang overflow diserialisasi sebagai `null` dan ditandai dalam `e_deltaet_overflow_history`. Metrik GA memuat `population_size`.
 

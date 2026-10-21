@@ -26,8 +26,9 @@
         </details>
         <div class="form-grid algorithm-grid">
           <label>Algoritma<select id="algorithm"></select></label>
-          <label>Objective<select id="objective"></select></label>
+          <label>Objective<select id="objective" aria-describedby="objective-description"></select></label>
         </div>
+        <p id="objective-description" class="objective-description"></p>
         <div id="parameters" class="form-grid"></div>
         <div class="form-grid seed-grid">
           <label>Seed<select id="seed-mode"><option value="random" selected>Acak</option><option value="manual">Manual</option></select></label>
@@ -43,6 +44,7 @@
         <h2>Hasil optimasi</h2>
         <button type="button" id="download-result">Unduh JSON</button>
       </div>
+      <p id="result-objective"></p>
       <p id="result-status" role="status"></p>
       <div id="metrics" class="metrics"></div>
       <section class="panel">

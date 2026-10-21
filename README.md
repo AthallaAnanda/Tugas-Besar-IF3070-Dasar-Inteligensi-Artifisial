@@ -1,6 +1,6 @@
 # Optimasi Muatan Kapal
 
-Program mencari penempatan kendaraan pada geladak kapal untuk memaksimalkan total ShippingFee. Solusi harus memenuhi batas geladak, larangan tumpang tindih, dan kapasitas berat kapal.
+Program mencari penempatan kendaraan pada geladak kapal untuk memaksimalkan total ShippingFee atau objective bonus efisiensi pendapatan–waktu–berat. Solusi harus memenuhi batas geladak, larangan tumpang tindih, dan kapasitas berat kapal.
 
 Antarmuka menyediakan enam pilihan algoritma:
 
@@ -29,7 +29,7 @@ Buka **http://127.0.0.1:5000/** melalui browser.
 ## Penggunaan
 
 1. Gunakan data sampel atau unggah JSON kapal dan kendaraan. Dataset juga bisa diedit langsung.
-2. Pilih algoritma, mode seed **Acak** atau **Manual**, dan parameter pencarian.
+2. Pilih algoritma, objective, mode seed **Acak** atau **Manual**, dan parameter pencarian.
 3. Klik **Jalankan optimasi**.
 4. Periksa initial state, solusi terbaik, nilai objective, jumlah langkah, durasi, dan statistik algoritma.
 5. Unduh hasil JSON, grafik PNG, atau visualisasi state SVG jika diperlukan.
@@ -47,6 +47,18 @@ Random Restart menerima **Maksimum iterasi per pencarian** dan **Maksimum restar
 Pada GA, visualisasi awal adalah individu terbaik populasi awal. Grafik menampilkan maksimum dan rata-rata populasi serta nilai terbaik sepanjang pencarian. Solusi terbaik dapat berbeda dari individu terbaik generasi terakhir jika elitisme dinonaktifkan.
 
 Pada SA, panel analisis menampilkan grafik probabilitas penerimaan `min(1, exp(ΔE/T))` berwarna merah dan temperatur setelah iterasi berwarna oranye. Keduanya dapat diunduh dalam satu PNG. Bagian **Grafik tambahan** menyediakan eksponen dan faktor eksponensial mentah untuk analisis lebih lanjut.
+
+## Objective bonus
+
+Pilihan **Efisiensi Pendapatan–Waktu–Berat** (`objective_2`) memakai skor per kapal:
+
+```text
+total ShippingFee / ((1 + ETA terlama) × (1 + total berat / kapasitas kapal))
+```
+
+Skor seluruh kapal dijumlahkan. Kapal kosong mendapat skor nol. ETA adalah estimasi waktu kedatangan, bukan deadline; ETA terlama dipakai sebagai pendekatan waktu penyelesaian pengiriman kapal. Objective ini merupakan heuristik rancangan untuk menyeimbangkan pendapatan, waktu, dan penggunaan kapasitas berat, bukan laba bersih atau pendapatan per hari aktual.
+
+Seluruh algoritma dapat memakai kedua objective. Nilai pada state, grafik, dan unduhan JSON mengikuti pilihan objective. Total ShippingFee aktual tetap ditampilkan terpisah dalam statistik, bersama ETA terlama dan berat muatan per kapal. Penjelasan rumus, asumsi, contoh, serta kasus nol ada di [dokumentasi objective](docs/objective.md).
 
 ## Struktur
 
