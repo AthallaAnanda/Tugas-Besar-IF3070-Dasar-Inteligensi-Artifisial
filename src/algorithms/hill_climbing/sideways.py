@@ -1,4 +1,3 @@
-"""Hill Climbing yang membolehkan perpindahan bernilai sama secara terbatas."""
 
 import random
 from time import perf_counter
@@ -7,7 +6,6 @@ from ._common import build_result, validate_limit
 
 
 def sideways_move(initial_state, objective_function, neighbor_generator, parameters=None):
-    """Pilih perbaikan terbaik atau neighbor setara sampai batas tercapai."""
     parameters = {} if parameters is None else parameters
     max_iterations = validate_limit(parameters, "max_iterations", 1000)
     maximum_sideways_move = validate_limit(

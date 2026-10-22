@@ -1,4 +1,3 @@
-"""Satu solusi yang menyimpan kapal, kendaraan, dan posisi yang sedang dipilih"""
 
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -13,23 +12,19 @@ from .vehicle import Vehicle
 
 @dataclass
 class State:
-    """Kendaraan tanpa placement tetap tercatat sebagai kendaraan di luar kapal"""
 
     ships: list[ShipState] = field(default_factory=list)
     vehicles: dict[str, Vehicle] = field(default_factory=dict)
 
     def copy(self):
-        """Salin semua daftar placement agar perubahan neighbor tidak mengubah state asal"""
         return deepcopy(self)
 
     @property
     def outside_vehicle_ids(self):
-        """Lihat kendaraan yang belum dimuat tanpa perlu menyimpan status secara double"""
         loaded = {placement.vehicle_id for ship in self.ships for placement in ship.placements}
         return set(self.vehicles) - loaded
 
     def deck_grid(self, ship_id):
-        """Tampilkan grid dengan identitas kendaraan di setiap sel yang terisi"""
         ship_state = next((item for item in self.ships if item.ship.id == ship_id), None)
         if ship_state is None:
             raise KeyError(ship_id)
@@ -45,7 +40,6 @@ class State:
         return grid
 
     def to_dict(self, objective_function=None):
-        """Serialisasi dengan objective terpilih; default tetap total ShippingFee."""
         if objective_function is None:
             from .objective import objective_1
 
@@ -67,7 +61,6 @@ class State:
 
     @classmethod
     def from_dict(cls, data):
-        """Baca definisi masalah beserta placement awal bila disediakan"""
         vehicles = [Vehicle(**vehicle) for vehicle in data["vehicles"]]
         ships = []
         for item in data["ships"]:
@@ -91,17 +84,11 @@ class State:
 
 
 def load_problem(path):
-    """Membaca kapal dan kendaraan dari berkas JSON"""
     with Path(path).open(encoding="utf-8") as file:
         return State.from_dict(json.load(file))
 
 
 def create_initial_state(ships, vehicles, seed=None):
-    """Mengacak urutan kendaraan dan cari posisi valid di geladak.
-
-    Kendaraan yang tidak muat atau tidak terpilih tetap berada di luar kapal.
-    Seed bisa diisi supaya hasil eksperimen dapat diulang.
-    """
     rng = random.Random(seed)
     state = State([ShipState(ship) for ship in ships], {v.id: v for v in vehicles})
     if len(state.vehicles) != len(vehicles) or len({ship.id for ship in ships}) != len(ships):
@@ -114,7 +101,6 @@ def create_initial_state(ships, vehicles, seed=None):
     pending = list(vehicles)
     rng.shuffle(pending)
     for vehicle in pending:
-        # Sisakan beberapa kendaraan di luar agar pencarian punya ruang untuk memperbaiki solusi
         if rng.random() < 0.25:
             continue
         choices = []

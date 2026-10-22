@@ -1,4 +1,3 @@
-"""Steepest Ascent Hill Climbing untuk memaksimalkan nilai state."""
 
 from time import perf_counter
 
@@ -6,7 +5,6 @@ from ._common import build_result, validate_limit
 
 
 def steepest_ascent(initial_state, objective_function, neighbor_generator, parameters=None):
-    """Pilih neighbor terbaik selama nilainya meningkat."""
     parameters = {} if parameters is None else parameters
     max_iterations = validate_limit(parameters, "max_iterations", 1000)
 

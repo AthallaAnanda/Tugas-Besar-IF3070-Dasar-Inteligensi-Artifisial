@@ -1,4 +1,3 @@
-"""Pastikan algoritma dari kedua branch memakai kontrak core yang sama."""
 
 from pathlib import Path
 
@@ -49,7 +48,6 @@ def test_annealing_preserves_best_when_accepting_worse_state():
     parameters = {"max_iterations": 1, "initial_temperature": 1e9, "seed": 42}
 
     def worse_neighbors(state):
-        # Batasi kandidat agar pengujian ini benar-benar melewati penerimaan solusi lebih buruk.
         for candidate in generate_neighbors(state):
             if objective_1(candidate) < objective_1(state):
                 yield candidate

@@ -29,10 +29,10 @@ def configuration(algorithm="hill_climbing", **parameters):
     ("hill_climbing", {}, 1),
     ("stochastic_hill_climbing", {}, 1),
     ("sideways_move", {"maximum_sideways_move": 0}, 1),
-    ("random_restart", {"maximum_restart": 2}, 4),
-    ("random_restart", {"maximum_restart": 0}, 2),
-    ("simulated_annealing", {}, 2),
-    ("simulated_annealing", {"max_iterations": 0}, 2),
+    ("random_restart", {"maximum_restart": 2}, 1),
+    ("random_restart", {"maximum_restart": 0}, 1),
+    ("simulated_annealing", {}, 3),
+    ("simulated_annealing", {"max_iterations": 0}, 3),
     ("genetic_algorithm", {"population_size": 2, "max_iterations": 0}, 1),
 ])
 def test_api_saves_complete_json_and_readable_pngs(tmp_path, algorithm, parameters, plot_count):
@@ -42,6 +42,8 @@ def test_api_saves_complete_json_and_readable_pngs(tmp_path, algorithm, paramete
     output = result["output"]
     assert output["status"] == "saved"
     assert len(output["plots"]) == plot_count
+    if algorithm == "simulated_annealing":
+        assert any(path.endswith("-sa-exponential.png") for path in output["plots"])
     saved = json.loads((tmp_path / output["result"]).read_text(encoding="utf-8"))
     assert saved == result
     assert saved["configuration"]["objective"] == "objective_2"
@@ -103,3 +105,25 @@ def test_overflowed_sa_factor_can_be_saved(tmp_path):
     saved = save_output(result, tmp_path / "output")
     assert saved["output"]["status"] == "saved"
     assert json.loads((tmp_path / saved["output"]["result"]).read_text()) == saved
+
+
+def test_sa_exponential_plot_preserves_factors_above_one_and_marks_overflow(monkeypatch):
+    output = import_module("src.services.output")
+    result = run_optimization(configuration("simulated_annealing"))
+    result["iterations"] = 5
+    result["metrics"]["e_deltaet_history"] = [0, 0.5, 1, 3, None]
+    result["metrics"]["e_deltaet_overflow_history"] = [False, False, False, False, True]
+    figures = []
+    monkeypatch.setattr(output, "save_figure", lambda figure, path: figures.append(figure))
+    output.annealing_exponential_plot(result, None)
+    figure = figures[0]
+    try:
+        axes = figure.axes[0]
+        line = axes.lines[0]
+        assert list(line.get_xdata()) == [1, 2, 3, 4, 5]
+        assert list(line.get_ydata())[:4] == [0, 0.5, 1, 3]
+        assert line.get_color() == "#386641"
+        assert "Simulated Annealing" in axes.get_title()
+        assert any("1 nilai overflow" in text.get_text() for text in figure.texts)
+    finally:
+        figure.clear()

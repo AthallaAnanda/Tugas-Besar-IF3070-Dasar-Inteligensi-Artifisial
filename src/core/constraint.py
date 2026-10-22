@@ -1,10 +1,8 @@
-"""Aturan penempatan kendaraan pada grid geladak dan batas berat kapal"""
 
 from .state import State
 
 
 def _references_are_valid(state):
-    """Satu kendaraan hanya boleh dimuat sekali pada kapal yang tepat"""
     ship_ids = [item.ship.id for item in state.ships]
     if not ship_ids or len(ship_ids) != len(set(ship_ids)):
         return False
@@ -22,13 +20,11 @@ def _references_are_valid(state):
 
 
 def is_valid(state: State):
-    """State valid bila referensi, posisi, sel, dan beratnya aman"""
     return (_references_are_valid(state) and check_inside_deck(state)
             and check_no_overlap(state) and check_capacity(state))
 
 
 def check_no_overlap(state: State):
-    """Satu sel grid tidak boleh dipakai lebih dari satu kendaraan"""
     for item in state.ships:
         occupied = set()
         for placement in item.placements:
@@ -43,7 +39,6 @@ def check_no_overlap(state: State):
 
 
 def check_inside_deck(state: State):
-    """Tidak boleh ada bagian kendaraan yang berada di luar batas geladak"""
     for item in state.ships:
         for placement in item.placements:
             vehicle = state.vehicles.get(placement.vehicle_id)
@@ -58,7 +53,6 @@ def check_inside_deck(state: State):
 
 
 def check_capacity(state: State):
-    """Jumlah berat kendaraan per kapal tidak boleh melebihi max_capacity"""
     for item in state.ships:
         weight = 0
         for placement in item.placements:

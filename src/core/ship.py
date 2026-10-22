@@ -1,4 +1,3 @@
-"""Ukuran kapal dan kendaraan yang sedang menempati geladaknya."""
 
 from dataclasses import dataclass, field
 from math import isfinite
@@ -8,7 +7,6 @@ from .placement import Placement
 
 @dataclass(frozen=True)
 class Ship:
-    """Kapasitas merupakan batas jumlah berat kendaraan yang diangkut"""
 
     id: str
     width: int
@@ -29,7 +27,6 @@ class Ship:
 
 @dataclass
 class ShipState:
-    """Penempatan kendaraan pada satu kapal dalam sebuah solusi"""
 
     ship: Ship
     placements: list[Placement] = field(default_factory=list)

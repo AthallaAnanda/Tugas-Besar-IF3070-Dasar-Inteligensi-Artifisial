@@ -1,4 +1,3 @@
-"""Random Restart menjalankan Steepest Ascent dari state awal yang baru."""
 
 from time import perf_counter
 
@@ -7,12 +6,6 @@ from .steepest import steepest_ascent
 
 
 def random_restart(initial_state_fn, objective_function, neighbor_generator, parameters=None):
-    """Ulangi Steepest Ascent sampai batas restart tercapai.
-
-    `maximum_restart` menghitung pengulangan setelah pencarian awal. Fungsi
-    `initial_state_fn` dipanggil sekali untuk pencarian awal dan sekali lagi
-    untuk setiap restart.
-    """
     parameters = {} if parameters is None else parameters
     maximum_restart = validate_limit(parameters, "maximum_restart", 10, minimum=0)
     max_iterations = validate_limit(parameters, "max_iterations", 1000)

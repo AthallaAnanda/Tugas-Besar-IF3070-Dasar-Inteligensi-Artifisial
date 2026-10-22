@@ -38,14 +38,14 @@ Jalankan `python -m src.app`, lalu buka `http://127.0.0.1:5000/`.
 ## Unduhan dan tampilan
 
 1. Unduh JSON. Periksa konfigurasi, initial state, solusi terbaik, history, dan statistik.
-2. Unduh grafik objective dan diagnostik sebagai PNG. Tombol utama pada analisis SA menghasilkan satu PNG berisi grafik probabilitas dan temperatur. Uji SA nol iterasi: temperatur awal tersedia dan probabilitas menjelaskan bahwa belum ada kandidat yang dievaluasi.
-3. Unduh state sebagai SVG dan buka berkasnya.
+2. Unduh grafik objective dan analisis SA sebagai PNG. Tombol probabilitas dan temperatur masing-masing menghasilkan PNG terpisah. Uji SA nol iterasi: temperatur awal tersedia dan probabilitas menjelaskan bahwa belum ada kandidat yang dievaluasi.
+3. Unduh Initial State dan Final State melalui tombol **Unduh state JPG**, lalu buka berkas `.jpg`. Pastikan gambar memiliki latar putih, ukuran proporsional, dan susunan kendaraan sesuai visualisasi di antarmuka.
 4. Periksa desktop dan layar 390 px. Label, form, statistik, serta visualisasi tetap terbaca tanpa membuat halaman melebar.
 
 ## Penyimpanan otomatis
 
-1. Jalankan optimasi dan periksa pesan **Tersimpan otomatis** beserta path JSON pada halaman hasil. Buka JSON di `output/results/` dan grafik objective di `output/plots/`; konfigurasi, seed, history, serta statistik harus sama dengan unduhan browser.
+1. Jalankan optimasi. Buka JSON di `output/results/` dan grafik objective di `output/plots/`; konfigurasi, seed, history, serta statistik harus sama dengan unduhan browser. Status dan path penyimpanan tidak ditampilkan pada halaman hasil.
 2. Ulangi konfigurasi dan seed yang sama. Nama file harus berbeda dan hasil run sebelumnya tetap tersedia.
-3. Jalankan SA, termasuk nol iterasi. PNG `-sa-analysis.png` berisi probabilitas penerimaan dan temperatur; saat nol iterasi, tidak ada probabilitas buatan. Jalankan GA nol generasi dan periksa grafik satu titik.
-4. Jalankan Random Restart dengan maksimum dua restart. Tersimpan satu grafik objective global dan tiga grafik `-restart-0.png` sampai `-restart-2.png`.
-5. Kirim input tidak valid. Tidak ada file hasil baru. Pada lingkungan uji dengan folder output tidak bisa ditulis, hasil optimasi tetap tampil dan bisa diunduh, pesan kegagalan penyimpanan terlihat, dan log server mencatat detailnya.
+3. Jalankan SA, termasuk nol iterasi. PNG `-sa-analysis.png` berisi probabilitas penerimaan dan temperatur; PNG `-sa-exponential.png` berisi faktor `exp(ΔE/T)` terhadap iterasi. Pastikan grafik eksponensial langsung terlihat di antarmuka dan tombol **Unduh PNG exp(ΔE/T)** menghasilkan gambar dengan judul lengkap. Faktor di atas 1 tidak dipotong menjadi 1, sedangkan overflow diberi keterangan tanpa digambar sebagai nilai terbatas. Saat nol iterasi, tidak ada faktor atau probabilitas buatan. Jalankan GA dan pastikan grafik menampilkan maksimum serta rata-rata populasi per generasi dengan warna utama `#386641`; untuk nol generasi, periksa grafik satu titik.
+4. Jalankan Random Restart dengan maksimum dua restart. Tersimpan hanya satu PNG `-objective.png` yang menampilkan objective terbaik sepanjang seluruh pencarian terhadap total iterasi. Pastikan sumbu X mencakup jumlah iterasi dari pencarian awal dan seluruh restart, serta tidak ada PNG per restart untuk run tersebut.
+5. Kirim input tidak valid. Tidak ada file hasil baru. Pada lingkungan uji dengan folder output tidak bisa ditulis, hasil optimasi tetap tampil dan bisa diunduh, respons API memuat status kegagalan penyimpanan, dan log server mencatat detailnya.

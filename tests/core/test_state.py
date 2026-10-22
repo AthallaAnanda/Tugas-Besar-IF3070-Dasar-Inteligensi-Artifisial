@@ -1,4 +1,3 @@
-"""Periksa kontrak state, grid, dan pembacaan data sampel."""
 
 import json
 from pathlib import Path

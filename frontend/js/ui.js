@@ -26,19 +26,36 @@ export function downloadCanvas(canvas, filename) {
 
 export function downloadChartStack(charts, filename) {
   const ratio = window.devicePixelRatio || 1;
-  const titleHeight = Math.round(36 * ratio);
+  const lineHeight = Math.round(24 * ratio);
+  const padding = Math.round(16 * ratio);
   const gap = Math.round(20 * ratio);
   const output = element("canvas");
   output.width = Math.max(...charts.map(({ canvas }) => canvas.width));
-  output.height = charts.reduce((sum, { canvas }) => sum + titleHeight + canvas.height, 0) + gap * (charts.length - 1);
   const context = output.getContext("2d");
+  context.font = `600 ${16 * ratio}px system-ui`;
+  const sections = charts.map(({ canvas, title }) => {
+    const lines = [];
+    for (const paragraph of title.split("\n")) {
+      let line = "";
+      for (const word of paragraph.split(/\s+/)) {
+        const next = line ? `${line} ${word}` : word;
+        if (line && context.measureText(next).width > output.width - 2 * padding) {
+          lines.push(line);
+          line = word;
+        } else line = next;
+      }
+      lines.push(line);
+    }
+    return { canvas, lines, titleHeight: lines.length * lineHeight + padding };
+  });
+  output.height = sections.reduce((sum, { canvas, titleHeight }) => sum + titleHeight + canvas.height, 0) + gap * (sections.length - 1);
   context.fillStyle = "white";
   context.fillRect(0, 0, output.width, output.height);
   context.fillStyle = "#173047";
   context.font = `600 ${16 * ratio}px system-ui`;
   let top = 0;
-  for (const { canvas, title } of charts) {
-    context.fillText(title, 16 * ratio, top + 24 * ratio);
+  for (const { canvas, lines, titleHeight } of sections) {
+    lines.forEach((line, index) => context.fillText(line, padding, top + (index + 1) * lineHeight));
     context.drawImage(canvas, 0, top + titleHeight);
     top += titleHeight + canvas.height + gap;
   }

@@ -1,4 +1,3 @@
-"""Ketiga jenis perubahan harus menghasilkan state valid yang baru."""
 
 import random
 import unittest

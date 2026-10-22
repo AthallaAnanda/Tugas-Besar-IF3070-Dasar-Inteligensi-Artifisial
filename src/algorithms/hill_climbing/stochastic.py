@@ -1,4 +1,3 @@
-"""Stochastic Hill Climbing mencoba satu neighbor acak per iterasi."""
 
 import random
 from time import perf_counter
@@ -8,7 +7,6 @@ from ._common import build_result, validate_limit
 
 
 def stochastic_hill_climbing(initial_state, objective_function, neighbor_generator, parameters=None):
-    """Coba satu neighbor acak per iterasi dan pindah hanya jika nilainya naik."""
     parameters = {} if parameters is None else parameters
     max_iterations = validate_limit(parameters, "max_iterations", 1000)
     rng = random.Random(parameters.get("seed"))
@@ -28,7 +26,6 @@ def stochastic_hill_climbing(initial_state, objective_function, neighbor_generat
             except NoNeighborError:
                 pass
         else:
-            # Tetap mendukung iterable neighbor khusus dari pemanggil lain.
             for count, candidate in enumerate(neighbor_generator(current), start=1):
                 if rng.randrange(count) == 0:
                     neighbor = candidate

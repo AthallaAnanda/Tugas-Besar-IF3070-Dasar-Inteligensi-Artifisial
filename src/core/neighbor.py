@@ -1,4 +1,3 @@
-"""Neighbor dibuat dengan menukar, memindah, atau memutar kendaraan"""
 
 from dataclasses import replace
 from itertools import combinations
@@ -10,41 +9,34 @@ from .state import State
 
 
 class NoNeighborError(ValueError):
-    """State valid tidak memiliki neighbor yang bisa dipilih."""
+    pass
 
 
 def _signature(state):
-    """Kombinasi posisi yang sama cukup dicoba sekali saja"""
     return frozenset(placement for ship in state.ships for placement in ship.placements)
 
 
 def _possible_moves(state):
-    """Usulkan perubahan placement tanpa membuat salinan state."""
     loaded = [placement for ship in state.ships for placement in ship.placements]
 
-    # Menukar dua kendaraan di dalam kapal, termasuk bila kapalnya berbeda
     for a, b in combinations(loaded, 2):
         yield {a.vehicle_id: replace(b, vehicle_id=a.vehicle_id),
                b.vehicle_id: replace(a, vehicle_id=b.vehicle_id)}
 
-    # Menukar yang di dalam dengan yang di luar juga termasuk operasi tukar
     for placement in loaded:
         for vehicle_id in sorted(state.outside_vehicle_ids):
             yield {placement.vehicle_id: None,
                    vehicle_id: replace(placement, vehicle_id=vehicle_id)}
 
-    # Perubahan orientasi tidak mengubah posisi kendaraan.
     for placement in loaded:
         yield {placement.vehicle_id: replace(
             placement, orientation="vertical" if placement.orientation == "horizontal" else "horizontal"
         )}
 
-    # Perpindahan mencakup kendaraan di luar yang masuk ke kapal
     for vehicle_id in state.vehicles:
         current_placement = next((p for p in loaded if p.vehicle_id == vehicle_id), None)
         for item in state.ships:
             vehicle = state.vehicles[vehicle_id]
-            # Kendaraan di luar bisa masuk dengan orientasi yang sesuai ruang kosong
             orientations = (current_placement.orientation,) if current_placement else ("horizontal", "vertical")
             for facing in orientations:
                 width, length = Placement(vehicle_id, item.ship.id, 0, 0, facing).occupied_size(
@@ -70,7 +62,6 @@ def _apply_move(state, changes):
 
 
 def generate_neighbors(state: State):
-    """Menghasilkan state baru yang valid tanpa menyentuh state asal"""
     if not is_valid(state):
         raise ValueError("Neighbor membutuhkan state awal yang valid")
 
@@ -84,7 +75,6 @@ def generate_neighbors(state: State):
 
 
 def random_neighbor(state: State, rng=None):
-    """Acak usulan langkah dan kembalikan state valid pertama yang ditemukan."""
     if not is_valid(state):
         raise ValueError("Neighbor membutuhkan state awal yang valid")
     rng = rng or random

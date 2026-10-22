@@ -1,4 +1,3 @@
-"""Objective terpilih harus konsisten dari pencarian hingga API/ekspor."""
 
 import pytest
 

@@ -1,4 +1,3 @@
-"""Nilai solusi hanya berasal dari kendaraan yang betul-betul diangkut."""
 
 import pytest
 

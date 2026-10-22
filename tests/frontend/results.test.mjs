@@ -37,6 +37,8 @@ test("SA acceptance probabilities handle improving, equal, worse, underflow and 
   } };
   const series = annealingSeries(result);
   assert.deepEqual(series.acceptance.points.map((point) => point.y), [1, 1, Math.exp(-2), 0, 1, null]);
+  assert.deepEqual(series.exponential.points.map((point) => point.y), [Math.exp(2), 1, Math.exp(-2), 0, null, null]);
+  assert.deepEqual(series.exponential.points.map((point) => point.x), [1, 2, 3, 4, 5, 6]);
   assert.deepEqual(series.acceptance.points.map((point) => point.x), [1, 2, 3, 4, 5, 6]);
   assert.deepEqual(series.temperature.points[0], { x: 0, y: 100 });
   assert.deepEqual(series.temperature.points.at(-1), { x: 6, y: 53.1441 });
@@ -48,6 +50,7 @@ test("SA with no evaluated candidates has no fabricated probability at iteration
     e_deltaet_history: [], e_deltaet_overflow_history: [], temperature_history: [100]
   } });
   assert.deepEqual(series.acceptance.points, []);
+  assert.deepEqual(series.exponential.points, []);
   assert.deepEqual(series.temperature.points, [{ x: 0, y: 100 }]);
 });
 

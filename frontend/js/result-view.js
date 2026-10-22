@@ -1,7 +1,7 @@
 import { drawHistory, drawLines } from "./charts.js";
 import { renderState } from "./visualization.js";
-import { annealingSeries, historySeries, restartSeries, stepLabel } from "./results.js";
-import { $, addOptions, download, downloadCanvas, downloadChartStack, element, number, valueList } from "./ui.js";
+import { algorithmLabel, annealingSeries, historySeries, restartSeries, stepLabel } from "./results.js";
+import { $, addOptions, download, downloadChartStack, element, number, valueList } from "./ui.js";
 
 const stopLabels = {
   no_improvement: "Pencarian berhenti karena tidak ada neighbor yang lebih baik.",
@@ -16,29 +16,36 @@ const stopLabels = {
 export class ResultView {
   constructor() {
     $("download-result").onclick = () => { if (this.result) download("optimization-result.json", this.result); };
-    $("download-chart").onclick = () => downloadCanvas($("chart"), "objective-history.png");
-    $("download-diagnostic").onclick = () => downloadCanvas($("diagnostic-chart"), "sa-diagnostic.png");
-    $("download-sa-analysis").onclick = () => downloadChartStack([
-      { canvas: $("acceptance-chart"), title: "Probabilitas penerimaan" },
-      { canvas: $("temperature-chart"), title: "Temperatur setelah iterasi" }
-    ], "sa-analysis.png");
-    $("diagnostic-metric").onchange = () => this.drawDiagnostic();
-    $("sa-analysis-extra").ontoggle = () => { if ($("sa-analysis-extra").open) this.drawDiagnostic(); };
+    $("download-chart").onclick = () => downloadChartStack([
+      { canvas: $("chart"), title: this.exportTitle($("history-heading").textContent) }
+    ], "objective-history.png");
+    $("download-sa-acceptance").onclick = () => downloadChartStack([
+      { canvas: $("acceptance-chart"), title: this.exportTitle("Probabilitas penerimaan") }
+    ], "sa-acceptance.png");
+    $("download-sa-temperature").onclick = () => downloadChartStack([
+      { canvas: $("temperature-chart"), title: this.exportTitle("Temperatur setelah iterasi") }
+    ], "sa-temperature.png");
+    $("download-sa-exponential").onclick = () => downloadChartStack([
+      { canvas: $("exponential-chart"), title: this.exportTitle(`exp(ΔE/T) terhadap iterasi\n${$("exponential-note").textContent}`) }
+    ], "sa-exponential.png");
     $("restart-search").onchange = () => this.drawRestart();
-    $("download-restart-chart").onclick = () => downloadCanvas($("restart-chart"), "restart-history.png");
+    $("download-restart-chart").onclick = () => {
+      const index = Number($("restart-search").value);
+      const search = index === 0 ? "Pencarian awal" : `Restart ${index}`;
+      const seed = this.result.configuration.restart_seeds[index];
+      downloadChartStack([
+        { canvas: $("restart-chart"), title: this.exportTitle(`${search}, seed ${seed}`) }
+      ], "restart-history.png");
+    };
     window.addEventListener("resize", () => this.redraw());
   }
 
   show(result, objectiveLabel) {
     this.result = result;
+    this.objectiveLabel = objectiveLabel;
     $("result-section").hidden = false;
     $("result-objective").textContent = `Objective: ${objectiveLabel}`;
     $("result-status").textContent = stopLabels[result.stop_reason];
-    const output = result.output;
-    $("output-status").textContent = output?.status === "saved"
-      ? `Tersimpan otomatis: ${output.result}. ${output.plots.length} grafik PNG di output/plots/.`
-      : output?.message || "";
-    $("output-status").classList.toggle("error", output?.status === "error");
     const entries = [
       ["Objective terbaik", number(result.objective_value)],
       ["Objective awal", number(result.history[0])],
@@ -66,6 +73,9 @@ export class ResultView {
     if (result.metrics.population_size !== undefined) statistics.push(["Jumlah populasi", result.metrics.population_size]);
     if (result.metrics.stuck_count !== undefined) statistics.push(["Frekuensi stuck", result.metrics.stuck_count]);
     if (result.metrics.accept_worse !== undefined) statistics.push(["Solusi lebih buruk diterima", result.metrics.accept_worse]);
+    if (result.algorithm === "simulated_annealing") {
+      statistics.push(["Temperatur akhir", number(result.metrics.temperature_history.at(-1), 6)]);
+    }
     if (result.metrics.sideways_moves !== undefined) {
       statistics.push(["Sideways move", result.metrics.sideways_moves]);
       statistics.push(["Batas sideways move", result.metrics.maximum_sideways_move]);
@@ -73,6 +83,9 @@ export class ResultView {
     if (result.metrics.restarts !== undefined) {
       statistics.push(["Jumlah restart", result.metrics.restarts]);
       statistics.push(["Total pencarian", result.metrics.restarts + 1]);
+      const iterations = result.metrics.iterations_per_restart;
+      const average = iterations.reduce((total, count) => total + count, 0) / iterations.length;
+      statistics.push(["Jumlah iterasi per restart (avg)", number(average)]);
     }
     valueList($("statistics"), statistics);
     $("initial-value").textContent = `Objective: ${number(result.history[0])}`;
@@ -80,6 +93,7 @@ export class ResultView {
     renderState(result.initial_state, $("initial-state"));
     renderState(result.final_state, $("final-state"));
     const heading = result.algorithm === "random_restart" ? "Objective terbaik terhadap total iterasi"
+      : result.algorithm === "genetic_algorithm" ? "Objective maksimum dan rata-rata populasi terhadap generasi"
       : `Objective terhadap ${stepLabel(result).toLowerCase()}`;
     $("history-heading").textContent = heading;
     $("chart").setAttribute("aria-label", heading);
@@ -91,6 +105,10 @@ export class ResultView {
     $("diagnostics-section").hidden = result.algorithm !== "simulated_annealing";
     this.showRestarts();
     this.redraw();
+  }
+
+  exportTitle(subject) {
+    return `${algorithmLabel(this.result)}\n${subject}\nObjective: ${this.objectiveLabel}`;
   }
 
   showRestarts() {
@@ -120,19 +138,17 @@ export class ResultView {
     drawLines($("restart-chart"), series, "Iterasi per pencarian", "Objective");
   }
 
-  drawDiagnostic() {
-    if (this.result?.algorithm !== "simulated_annealing" || !$("sa-analysis-extra").open) return;
-    const field = $("diagnostic-metric").value;
-    const offset = field === "temperature_history" ? 0 : 1;
-    const points = this.result.metrics[field].map((y, index) => ({ x: index + offset, y }));
-    const label = $("diagnostic-metric").selectedOptions[0].textContent;
-    drawLines($("diagnostic-chart"), [{ points, color: "#126c8c" }], "Iterasi", label);
-  }
-
   drawAnnealing() {
     if (this.result?.algorithm !== "simulated_annealing") return;
     const series = annealingSeries(this.result);
     const domain = { xMin: 0, xMax: this.result.iterations };
+    const overflowCount = this.result.metrics.e_deltaet_overflow_history.filter(Boolean).length;
+    $("exponential-note").textContent = "Faktor exp(ΔE/T) ditampilkan tanpa pembatasan maksimum 1."
+      + (overflowCount ? ` ${overflowCount} nilai overflow tidak digambar; lihat data JSON untuk detailnya.` : "");
+    drawLines($("exponential-chart"), [series.exponential], "Iterasi", "exp(ΔE/T)", {
+      ...domain, yMin: 0,
+      emptyMessage: series.exponential.points.length ? "Tidak ada nilai terbatas untuk ditampilkan." : "Belum ada kandidat yang dievaluasi."
+    });
     drawLines($("acceptance-chart"), [series.acceptance], "Iterasi", "min(1, exp(ΔE/T))", {
       ...domain, yMin: 0, yMax: 1, emptyMessage: "Belum ada kandidat yang dievaluasi."
     });
@@ -143,7 +159,6 @@ export class ResultView {
     if (!this.result) return;
     drawHistory($("chart"), this.result);
     this.drawAnnealing();
-    this.drawDiagnostic();
     this.drawRestart();
   }
 }

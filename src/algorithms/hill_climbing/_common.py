@@ -1,4 +1,3 @@
-"""Pembantu internal yang dipakai bersama oleh varian Hill Climbing."""
 
 
 def validate_limit(parameters, name, default, minimum=1):

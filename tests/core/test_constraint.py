@@ -1,4 +1,3 @@
-"""Periksa batas geladak, berat, dan kendaraan yang saling bertumpuk."""
 
 from src.core.constraint import check_capacity, check_inside_deck, check_no_overlap, is_valid
 from src.core.placement import Placement

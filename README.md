@@ -74,7 +74,7 @@ Isi `output/results/` dan `output/plots/` diabaikan Git. Untuk menyertakan hasil
 
 ## Objective bonus
 
-Pilihan **Efisiensi Pendapatan–Waktu–Berat** (`objective_2`) memakai skor per kapal:
+Pilihan **Efisiensi Pendapatan, Waktu, dan Berat** (`objective_2`) memakai skor per kapal:
 
 ```text
 total ShippingFee / ((1 + ETA terlama) × (1 + total berat / kapasitas kapal))

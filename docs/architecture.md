@@ -15,7 +15,7 @@ Aplikasi menggunakan Python/Flask untuk pencarian dan API, serta HTML, CSS, dan 
 | `src/app.py` | Frontend dan endpoint API. |
 | `frontend/js/app.js` | Form dataset, parameter, seed, request optimasi, dan status. |
 | `frontend/js/result-view.js` | Ringkasan hasil, initial state, solusi terbaik, dan grafik. |
-| `frontend/js/visualization.js` | Penggambaran geladak dan ekspor SVG. |
+| `frontend/js/visualization.js` | Penggambaran geladak menggunakan SVG dan ekspor JPG berlatar putih melalui canvas. |
 | `frontend/js/charts.js` | Grafik history, pencarian Random Restart, dan diagnostik SA pada Canvas. |
 | `frontend/js/results.js` | Seri grafik dan label iterasi/generasi. |
 | `frontend/js/ui.js` | Elemen form, format angka, daftar nilai, dan unduhan. |

@@ -1,4 +1,5 @@
 import json
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
@@ -7,8 +8,17 @@ from uuid import uuid4
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 
+from .optimization import ALGORITHMS
+
 
 PLOT_LOCK = Lock()
+PRIMARY_COLOR = "#386641"
+
+
+def plot_title(result, subject):
+    algorithm = ALGORITHMS[result["algorithm"]]["label"]
+    objective = result["configuration"]["objective"]
+    return f"{algorithm}\n{subject} ({objective})"
 
 
 def plot_line(axes, values, label, color, *, start=0, dashed=False):
@@ -41,20 +51,23 @@ def objective_plot(result, path):
     algorithm = result["algorithm"]
     if algorithm == "random_restart":
         xlabel = "Total iterasi"
-        plot_line(axes, result["best_history"], "Terbaik seluruh pencarian", "#126c8c")
+        plot_line(axes, result["best_history"], "Terbaik seluruh pencarian", PRIMARY_COLOR)
     else:
         ga = algorithm == "genetic_algorithm"
         xlabel = "Generasi" if ga else "Iterasi"
-        plot_line(axes, result["history"], "Maksimum populasi" if ga else "Nilai saat ini", "#126c8c")
+        plot_line(axes, result["history"], "Maksimum populasi" if ga else "Nilai saat ini", PRIMARY_COLOR)
         if ga:
-            plot_line(axes, result["mean_history"], "Rata-rata populasi", "#16806a")
+            plot_line(axes, result["mean_history"], "Rata-rata populasi", "#126c8c")
         plot_line(axes, result["best_history"], "Terbaik sepanjang pencarian", "#d97706", dashed=True)
-    decorate(axes, f"{algorithm} — {result['configuration']['objective']}", xlabel)
+    subject = ("Objective maksimum dan rata-rata populasi terhadap generasi"
+               if algorithm == "genetic_algorithm" else f"Objective terhadap {xlabel.lower()}")
+    decorate(axes, plot_title(result, subject), xlabel)
     save_figure(figure, path)
 
 
 def annealing_plot(result, path):
     figure = Figure(figsize=(10, 8), layout="constrained")
+    figure.suptitle(plot_title(result, "Analisis probabilitas penerimaan dan temperatur"))
     acceptance_axes, temperature_axes = figure.subplots(2, 1)
     metrics = result["metrics"]
     overflow = metrics["e_deltaet_overflow_history"]
@@ -62,7 +75,7 @@ def annealing_plot(result, path):
         1 if overflow[index] else min(1, factor) if factor is not None and factor >= 0 else None
         for index, factor in enumerate(metrics["e_deltaet_history"])
     ]
-    plot_line(acceptance_axes, probabilities, "Probabilitas penerimaan", "#d62828", start=1)
+    plot_line(acceptance_axes, probabilities, "Probabilitas penerimaan", PRIMARY_COLOR, start=1)
     acceptance_axes.set_ylim(0, 1)
     if not probabilities:
         acceptance_axes.text(0.5, 0.5, "Belum ada kandidat yang dievaluasi.",
@@ -74,13 +87,29 @@ def annealing_plot(result, path):
     save_figure(figure, path)
 
 
-def restart_plot(result, index, path):
+def annealing_exponential_plot(result, path):
     figure = Figure(figsize=(10, 5), layout="constrained")
     axes = figure.subplots()
-    plot_line(axes, result["metrics"]["history_per_restart"][index], "Objective", "#126c8c")
-    title = "Pencarian awal" if index == 0 else f"Restart {index}"
-    seed = result["configuration"]["restart_seeds"][index]
-    decorate(axes, f"{title} (seed {seed})", "Iterasi per pencarian")
+    metrics = result["metrics"]
+    values = [
+        factor if factor is not None and math.isfinite(factor) and factor >= 0 else None
+        for factor in metrics["e_deltaet_history"]
+    ]
+    plot_line(axes, values, "exp(ΔE/T)", PRIMARY_COLOR, start=1)
+    axes.set_xlim(0, max(1, result["iterations"]))
+    axes.set_ylim(bottom=0)
+    overflow_count = sum(metrics["e_deltaet_overflow_history"])
+    notes = []
+    if not values:
+        notes.append("Belum ada kandidat yang dievaluasi.")
+    elif not any(value is not None for value in values):
+        notes.append("Tidak ada nilai terbatas untuk ditampilkan.")
+    if overflow_count:
+        notes.append(f"{overflow_count} nilai overflow tidak digambar; lihat data JSON untuk detailnya.")
+    if notes:
+        figure.text(0.5, 0.01, "\n".join(notes), ha="center", fontsize=9)
+        figure.get_layout_engine().set(rect=(0, 0.1, 1, 0.9))
+    decorate(axes, plot_title(result, "exp(ΔE/T) terhadap iterasi"), "Iterasi", "exp(ΔE/T)")
     save_figure(figure, path)
 
 
@@ -93,11 +122,7 @@ def save_output(result, output_dir):
     plots = [(objective_path, objective_plot, ())]
     if result["algorithm"] == "simulated_annealing":
         plots.append((Path("plots") / f"{run_id}-sa-analysis.png", annealing_plot, ()))
-    elif result["algorithm"] == "random_restart":
-        plots.extend(
-            (Path("plots") / f"{run_id}-restart-{index}.png", restart_plot, (index,))
-            for index in range(len(result["metrics"]["history_per_restart"]))
-        )
+        plots.append((Path("plots") / f"{run_id}-sa-exponential.png", annealing_exponential_plot, ()))
 
     saved = {**result, "output": {
         "status": "saved",

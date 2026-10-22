@@ -22,6 +22,35 @@ function colorFor(id) {
   return "hsl(" + (hash % 360) + ", 58%, 72%)";
 }
 
+async function downloadStateJpg(svg, ship) {
+  const width = 1600;
+  const height = Math.max(1, Math.round(width * ship.length / ship.width));
+  const copy = svg.cloneNode(true);
+  copy.setAttribute("xmlns", SVG_NS);
+  copy.setAttribute("width", String(width));
+  copy.setAttribute("height", String(height));
+  copy.setAttribute("font-family", "sans-serif");
+  const source = new Blob([new XMLSerializer().serializeToString(copy)], { type: "image/svg+xml" });
+  const url = URL.createObjectURL(source);
+  try {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    context.fillStyle = "white";
+    context.fillRect(0, 0, width, height);
+    context.drawImage(image, 0, 0, width, height);
+    const jpg = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.95));
+    if (!jpg) throw new Error("Gagal membuat gambar JPG");
+    download(`state-${ship.id}.jpg`, jpg);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 export function renderState(state, container) {
   container.replaceChildren();
 
@@ -122,13 +151,17 @@ export function renderState(state, container) {
 
     const exportButton = document.createElement("button");
     exportButton.type = "button";
-    exportButton.textContent = "Unduh state SVG";
-    exportButton.onclick = () => {
-      const copy = svg.cloneNode(true);
-      copy.setAttribute("xmlns", SVG_NS);
-      copy.setAttribute("width", "800");
-      copy.setAttribute("height", String(800 * item.ship.length / item.ship.width));
-      download(`state-${item.ship.id}.svg`, new XMLSerializer().serializeToString(copy), "image/svg+xml");
+    exportButton.textContent = "Unduh state JPG";
+    exportButton.onclick = async () => {
+      exportButton.disabled = true;
+      try {
+        await downloadStateJpg(svg, item.ship);
+        exportButton.textContent = "Unduh state JPG";
+      } catch {
+        exportButton.textContent = "Gagal mengunduh JPG, coba lagi";
+      } finally {
+        exportButton.disabled = false;
+      }
     };
     card.append(heading, svg, details, exportButton);
     container.append(card);

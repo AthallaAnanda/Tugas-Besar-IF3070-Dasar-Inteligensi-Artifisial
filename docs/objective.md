@@ -6,7 +6,7 @@ Kedua objective memaksimalkan skor dan hanya menerima state valid: kendaraan ber
 
 `objective_1` menjumlahkan tarif seluruh kendaraan yang diangkut. Kendaraan di luar kapal tidak berkontribusi. Nilainya adalah total tarif pengiriman dalam juta rupiah.
 
-## Objective bonus: Efisiensi Pendapatan–Waktu–Berat
+## Objective bonus: Efisiensi Pendapatan, Waktu, dan Berat
 
 Untuk kapal ke-j, hitung:
 

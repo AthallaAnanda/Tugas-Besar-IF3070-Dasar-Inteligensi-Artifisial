@@ -1,4 +1,3 @@
-"""Data kendaraan yang tersedia untuk dimuat ke kapal"""
 
 from dataclasses import dataclass
 from math import isfinite
@@ -6,7 +5,6 @@ from math import isfinite
 
 @dataclass(frozen=True)
 class Vehicle:
-    """Ukuran disini memakai satuan sel grid, sedangkan berat memakai satuan kapasitas kapal"""
 
     id: str
     width: int

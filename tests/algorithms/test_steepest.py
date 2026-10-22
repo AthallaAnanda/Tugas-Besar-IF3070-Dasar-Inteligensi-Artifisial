@@ -1,4 +1,3 @@
-"""Perilaku Steepest Ascent pada state valid dan batas berhenti."""
 
 import unittest
 

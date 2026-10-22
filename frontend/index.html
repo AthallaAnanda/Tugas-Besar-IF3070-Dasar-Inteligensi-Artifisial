@@ -26,9 +26,8 @@
         </details>
         <div class="form-grid algorithm-grid">
           <label>Algoritma<select id="algorithm"></select></label>
-          <label>Objective<select id="objective" aria-describedby="objective-description"></select></label>
+          <label>Objective<select id="objective"></select></label>
         </div>
-        <p id="objective-description" class="objective-description"></p>
         <div id="parameters" class="form-grid"></div>
         <div class="form-grid seed-grid">
           <label>Seed<select id="seed-mode"><option value="random" selected>Acak</option><option value="manual">Manual</option></select></label>
@@ -46,7 +45,6 @@
       </div>
       <p id="result-objective"></p>
       <p id="result-status" role="status"></p>
-      <p id="output-status" role="status"></p>
       <div id="metrics" class="metrics"></div>
       <section class="panel">
         <h3>Statistik</h3>
@@ -87,26 +85,19 @@
         <canvas id="restart-chart" aria-label="Objective terhadap iterasi dalam satu pencarian"></canvas>
       </section>
       <section id="diagnostics-section" class="panel" hidden>
-        <div class="section-heading">
-          <h3>Analisis Simulated Annealing</h3>
-          <button type="button" id="download-sa-analysis">Unduh PNG</button>
+        <h3>Analisis Simulated Annealing</h3>
+        <div class="sa-download-actions">
+          <button type="button" id="download-sa-exponential">Unduh PNG exp(ΔE/T)</button>
+          <button type="button" id="download-sa-acceptance">Unduh PNG probabilitas</button>
+          <button type="button" id="download-sa-temperature">Unduh PNG temperatur</button>
         </div>
-        <h4>Probabilitas penerimaan</h4>
+        <h4>Faktor exp(ΔE/T) terhadap iterasi</h4>
+        <p id="exponential-note">Faktor exp(ΔE/T) ditampilkan tanpa pembatasan maksimum 1.</p>
+        <canvas id="exponential-chart" aria-label="Simulated Annealing: exp(ΔE/T) terhadap iterasi"></canvas>
+        <h4 class="chart-subheading">Probabilitas penerimaan</h4>
         <canvas id="acceptance-chart" aria-label="Probabilitas penerimaan min(1, exp(ΔE/T)) terhadap iterasi"></canvas>
         <h4 class="chart-subheading">Temperatur setelah iterasi</h4>
         <canvas id="temperature-chart" aria-label="Temperatur setelah iterasi SA, termasuk temperatur awal pada iterasi nol"></canvas>
-        <details id="sa-analysis-extra">
-          <summary>Grafik tambahan</summary>
-          <div class="section-heading">
-            <label>Grafik<select id="diagnostic-metric">
-              <option value="temperature_history">Temperatur</option>
-              <option value="log_e_deltaet_history">ΔE / T</option>
-              <option value="e_deltaet_history">exp(ΔE/T)</option>
-            </select></label>
-            <button type="button" id="download-diagnostic">Unduh PNG</button>
-          </div>
-          <canvas id="diagnostic-chart" aria-label="Grafik diagnostik SA terhadap iterasi"></canvas>
-        </details>
       </section>
     </section>
   </main>

@@ -20,7 +20,6 @@ try {
   assert.equal(await page.locator("#algorithm option").count(), 6);
   assert.equal(await page.locator("#objective option").count(), 2);
   assert.equal(await page.locator("#objective").inputValue(), "objective_1");
-  assert.match(await page.locator("#objective-description").innerText(), /total tarif pengiriman/);
   assert.equal(await page.locator("#seed-mode").inputValue(), "random");
   assert.equal(await page.locator("#seed").isDisabled(), true);
   assert.equal(await page.locator("#algorithm-seed").isDisabled(), true);
@@ -35,7 +34,6 @@ try {
     const result = await response.json();
     if (response.ok()) {
       assert.equal(result.output.status, "saved");
-      assert.ok((await page.locator("#output-status").innerText()).includes(result.output.result));
     }
     return { response, result };
   }
@@ -145,8 +143,14 @@ try {
   assert.deepEqual(exported.mean_history, ga.result.mean_history);
   const [png] = await Promise.all([page.waitForEvent("download"), page.locator("#download-chart").click()]);
   assert.equal(png.suggestedFilename(), "objective-history.png");
-  const [svg] = await Promise.all([page.waitForEvent("download"), page.locator("#final-state button").click()]);
-  assert.match(await readFile(await svg.path(), "utf8"), /<svg/);
+  for (const selector of ["#initial-state button", "#final-state button"]) {
+    assert.equal(await page.locator(selector).innerText(), "Unduh state JPG");
+    const [jpg] = await Promise.all([page.waitForEvent("download"), page.locator(selector).click()]);
+    assert.match(jpg.suggestedFilename(), /\.jpg$/);
+    const image = await readFile(await jpg.path());
+    assert.equal(image.readUInt16BE(0), 0xffd8);
+    assert.equal(image.readUInt16BE(image.length - 2), 0xffd9);
+  }
 
   await page.locator('#parameters [data-parameter="max_iterations"]').fill("0");
   const zero = await optimize();
@@ -168,17 +172,26 @@ try {
   assert.equal(await page.locator("#diagnostics-section").isVisible(), true);
   assert.equal(await page.locator("#acceptance-chart").isVisible(), true);
   assert.equal(await page.locator("#temperature-chart").isVisible(), true);
+  assert.equal(await page.locator("#exponential-chart").isVisible(), true);
+  assert.equal(await page.locator("#exponential-chart").evaluate((canvas) => canvas.width > 0), true);
+  assert.ok(sa.result.output.plots.some((path) => path.endsWith("-sa-exponential.png")));
+  const [exponentialPNG] = await Promise.all([page.waitForEvent("download"), page.locator("#download-sa-exponential").click()]);
+  assert.equal(exponentialPNG.suggestedFilename(), "sa-exponential.png");
+  const exponentialImage = await readFile(await exponentialPNG.path());
+  assert.equal(exponentialImage.readUInt32BE(16), await page.locator("#exponential-chart").evaluate((canvas) => canvas.width));
+  assert.ok(exponentialImage.readUInt32BE(20) > await page.locator("#exponential-chart").evaluate((canvas) => canvas.height));
   assert.equal(await page.locator("#history-legend span").count(), 2);
   assert.match(await page.locator("#statistics").innerText(), /Frekuensi stuck/);
-  const [saPNG] = await Promise.all([page.waitForEvent("download"), page.locator("#download-sa-analysis").click()]);
-  assert.equal(saPNG.suggestedFilename(), "sa-analysis.png");
-  const saImage = await readFile(await saPNG.path());
-  const chartSizes = await page.evaluate(() => ({
-    width: document.getElementById("acceptance-chart").width,
-    totalHeight: document.getElementById("acceptance-chart").height + document.getElementById("temperature-chart").height
-  }));
-  assert.equal(saImage.readUInt32BE(16), chartSizes.width);
-  assert.ok(saImage.readUInt32BE(20) > chartSizes.totalHeight);
+  for (const [metric, chart] of [["acceptance", "acceptance-chart"], ["temperature", "temperature-chart"]]) {
+    const [saPNG] = await Promise.all([
+      page.waitForEvent("download"), page.locator(`#download-sa-${metric}`).click()
+    ]);
+    assert.equal(saPNG.suggestedFilename(), `sa-${metric}.png`);
+    const saImage = await readFile(await saPNG.path());
+    const chartSizes = await page.locator(`#${chart}`).evaluate((canvas) => ({ width: canvas.width, height: canvas.height }));
+    assert.equal(saImage.readUInt32BE(16), chartSizes.width);
+    assert.ok(saImage.readUInt32BE(20) > chartSizes.height);
+  }
   if (process.env.SA_SCREENSHOT) {
     await page.locator('#parameters [data-parameter="max_iterations"]').fill("100");
     await page.locator('#parameters [data-parameter="initial_temperature"]').fill("100");
@@ -186,14 +199,11 @@ try {
     await page.locator("#diagnostics-section").screenshot({ path: process.env.SA_SCREENSHOT });
     await page.locator('#parameters [data-parameter="initial_temperature"]').fill("1000");
   }
-  await page.locator("#sa-analysis-extra summary").click();
-  for (const field of ["temperature_history", "log_e_deltaet_history", "e_deltaet_history"]) {
-    await page.locator("#diagnostic-metric").selectOption(field);
-    assert.equal(await page.locator("#diagnostic-chart").evaluate((canvas) => canvas.width > 0), true);
-  }
+  assert.equal(await page.locator("#sa-analysis-extra").count(), 0);
   await page.locator('#parameters [data-parameter="max_iterations"]').fill("0");
   assert.equal((await optimize()).result.iterations, 0);
   assert.equal(await page.locator("#temperature-chart").isVisible(), true);
+  assert.equal(await page.locator("#exponential-chart").isVisible(), true);
   await page.locator('#parameters [data-parameter="max_iterations"]').fill("3");
 
   await page.locator("#algorithm").selectOption("genetic_algorithm");
@@ -228,7 +238,6 @@ try {
   await page.locator("#restart-search").selectOption("2");
 
   await page.locator("#objective").selectOption("objective_2");
-  assert.match(await page.locator("#objective-description").innerText(), /ETA terlama/);
   for (const algorithm of ["hill_climbing", "stochastic_hill_climbing", "sideways_move", "random_restart", "genetic_algorithm", "simulated_annealing"]) {
     await page.locator("#algorithm").selectOption(algorithm);
     await page.locator('#parameters [data-parameter="max_iterations"]').fill("2");
@@ -262,7 +271,6 @@ try {
   assert.equal(bonusExport.configuration.objective, "objective_2");
   assert.equal(bonusExport.final_state.value, bonusExport.objective_value);
   await page.locator("#objective").selectOption("objective_1");
-  assert.match(await page.locator("#objective-description").innerText(), /total tarif pengiriman/);
   assert.match(await page.locator("#result-objective").innerText(), /Efisiensi Pendapatan/);
   await page.locator("#objective").selectOption("objective_2");
 

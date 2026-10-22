@@ -7,49 +7,49 @@ from src.core.neighbor import generate_neighbors
 def genes(state):
     result = {}
 
-    for item in state.ships: # consists of ships, each ship has placements
-        for placement in item.placements: # each placement is a gene
+    for item in state.ships:
+        for placement in item.placements:
             result[placement.vehicle_id] = placement 
 
     return result
 
 def crossover(parent_a, parent_b, rng):
-    child = parent_a.copy() # copy of state from parent a
+    child = parent_a.copy()
     for item in child.ships:
         item.placements.clear()
 
-    genes_a = genes(parent_a) # dictionary of vehicle_id to placement for parent a
+    genes_a = genes(parent_a)
     genes_b = genes(parent_b)
     
     ships = {}
     for item in child.ships:
         ships[item.ship.id] = item 
 
-    vehicle_ids = sorted(child.vehicles) # list of vehicle ids in child state
+    vehicle_ids = sorted(child.vehicles)
     rng.shuffle(vehicle_ids)
 
     for vehicle_id in vehicle_ids:
         if rng.random() < 0.5: 
-            source = genes_a # choose parent's gene with 50% probability
+            source = genes_a
         else:
             source = genes_b
         
         placement = source.get(vehicle_id)
         if placement is None:
-            continue # condition when the vehicle_id is outside the ship
+            continue
 
         target = ships[placement.ship_id]
         target.placements.append(placement)
 
         if not is_valid(child):
-            target.placements.pop() # erase the placement if it makes the child invalid
+            target.placements.pop()
 
     return child
 
 def mutate(state, rng):
     selected = None
-    for count, candidate in enumerate(generate_neighbors(state), start = 1): # iterate count while generating neighbors
-        if rng.randrange(count) == 0: # randomly select a neighbor with uniform probability
+    for count, candidate in enumerate(generate_neighbors(state), start = 1):
+        if rng.randrange(count) == 0:
             selected = candidate.copy()
 
     if selected:
@@ -59,11 +59,11 @@ def mutate(state, rng):
 
 def select_parent(population, scores, tour_size, rng):
     participants = rng.sample(range(len(population)), tour_size)
-    winner = max(participants, key = lambda index: scores[index]) # take the index of the participant with the highest score
+    winner = max(participants, key = lambda index: scores[index])
     return population[winner]
 
 def genetic_algorithm(initial_population, objective_function, parameters = None):
-    started = time.perf_counter() # function to measure the length of time taken
+    started = time.perf_counter()
     p = parameters or {}
 
     population_size = p.get("population_size", 50)
@@ -75,7 +75,7 @@ def genetic_algorithm(initial_population, objective_function, parameters = None)
     rng = random.Random(p.get("seed"))
 
     if type(population_size) is not int or population_size < 2:
-        raise ValueError("population_size minimal bernilai 2") # need minimum of 2 population to select parents
+        raise ValueError("population_size minimal bernilai 2")
     if type(max_iterations) is not int or max_iterations < 0:
         raise ValueError("max_iterations harus integer non-negatif") 
     if type(elitism) is not int or not 0 <= elitism < population_size:
@@ -86,25 +86,25 @@ def genetic_algorithm(initial_population, objective_function, parameters = None)
            for rate in (crossover_rate, mutation_rate)):
         raise ValueError("Probabilitas harus berhingga dan bernilai antara 0 dan 1")
 
-    population = [state.copy() for state in initial_population()] # copy the initial population to avoid mutation of the original states
+    population = [state.copy() for state in initial_population()]
     if len(population) != population_size:
         raise ValueError("Jumlah state awal harus sama dengan population_size")
     if not all(is_valid(state) for state in population):
         raise ValueError("Semua state awal harus valid")
 
-    reference = population[0] # first state as reference
+    reference = population[0]
     reference_ships = {} 
     for item in reference.ships:
-        reference_ships[item.ship.id] = item.ship # define a dictionary of ship id of first state
+        reference_ships[item.ship.id] = item.ship
         
     for state in population:
         ships = {}
         for item in state.ships:
-            ships[item.ship.id] = item.ship # define a dictionary of ship id for each state
+            ships[item.ship.id] = item.ship
         if state.vehicles != reference.vehicles or ships != reference_ships:
             raise ValueError("Semua individu harus memakai acuan yang sama")
 
-    scores = [objective_function(state) for state in population] # calculate the objective function for each state 
+    scores = [objective_function(state) for state in population]
     best_index = max(range(population_size), key = lambda i: scores[i])
     best = population[best_index].copy()
     best_value = scores[best_index]
@@ -115,26 +115,26 @@ def genetic_algorithm(initial_population, objective_function, parameters = None)
     best_history = [best_value]
 
     for iteration in range(max_iterations):
-        ranked = sorted(range(population_size), key = lambda i: scores[i], reverse = True) # sort the indices of the population based on their scores (descending)
-        next_population = [population[index].copy() for index in ranked[:elitism]] # keep the best individuals based on elitism
+        ranked = sorted(range(population_size), key = lambda i: scores[i], reverse = True)
+        next_population = [population[index].copy() for index in ranked[:elitism]]
 
         while len(next_population) < population_size: 
-            parent_a = select_parent(population, scores, tour_size, rng) # pick from the population based on tournament selection
+            parent_a = select_parent(population, scores, tour_size, rng)
             parent_b = select_parent(population, scores, tour_size, rng)
 
-            if rng.random() < crossover_rate: # crossover with probability crossover_rate
+            if rng.random() < crossover_rate:
                 child = crossover(parent_a, parent_b, rng)
             else:
                 child = parent_a.copy() 
 
-            if rng.random() < mutation_rate: # mutate with probability mutation_rate
+            if rng.random() < mutation_rate:
                 child = mutate(child, rng)
 
-            next_population.append(child) # add the child to the next population
+            next_population.append(child)
 
         population = next_population
         scores = [objective_function(state) for state in population]
-        best_index = max(range(population_size), key = lambda i: scores[i]) # find the index of the best individual
+        best_index = max(range(population_size), key = lambda i: scores[i])
 
         if scores[best_index] > best_value:
             best = population[best_index].copy()

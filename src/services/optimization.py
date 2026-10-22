@@ -107,7 +107,7 @@ def capabilities():
             },
             {
                 "id": "objective_2",
-                "label": "Efisiensi Pendapatan–Waktu–Berat",
+                "label": "Efisiensi Pendapatan, Waktu, dan Berat",
                 "description": (
                     "Skor per kapal = total ShippingFee / ((1 + ETA terlama) × "
                     "(1 + total berat / kapasitas)). Skor seluruh kapal dijumlahkan. "
@@ -241,7 +241,6 @@ def run_optimization(config):
 
 
 def stop_reason(algorithm, result, parameters):
-    """Describe termination using returned histories, without modifying algorithms."""
     if algorithm == "genetic_algorithm":
         return "max_iterations"
     if algorithm == "random_restart":

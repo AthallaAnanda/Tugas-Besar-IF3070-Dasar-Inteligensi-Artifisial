@@ -4,31 +4,31 @@ import time
 from src.core.constraint import is_valid
 
 def sample_neighbor(state, current_value, objective_function, neighbor_generator, rng):
-    selected = None # state from neighbor_generator
-    selected_value = None # objective value of selected
+    selected = None
+    selected_value = None
     count = 0
     has_improvement = False
 
     for candidate in neighbor_generator(state):
         value = objective_function(candidate)
-        has_improvement = has_improvement or value > current_value # if any neighbor is better than current
+        has_improvement = has_improvement or value > current_value
         count += 1
 
         if rng.randrange(count) == 0:
-            selected = candidate.copy() # value is copied to avoid mutation of the original candidate
+            selected = candidate.copy()
             selected_value = value
 
     return selected, selected_value, has_improvement
 
 def simulated_annealing(initial_state, objective_function, neighbor_generator, parameters = None):
-    started = time.perf_counter() # function to measure the length of time taken
-    p = parameters or {} # filled with default values if parameters is None
+    started = time.perf_counter()
+    p = parameters or {}
 
-    temperature = float(p.get("initial_temperature", 1000.0)) # start at T = 1000
-    cooling_rate = float(p.get("cooling_rate", 0.95)) # T = T * 0.95 each iteration
-    min_temperature = float(p.get("min_temperature", 0.001)) # stop if T < 0.001
-    max_iterations = p.get("max_iterations", 1000) # maximum of 1000 iterations
-    rng = random.Random(p.get("seed")) # random number generator for reproducability
+    temperature = float(p.get("initial_temperature", 1000.0))
+    cooling_rate = float(p.get("cooling_rate", 0.95))
+    min_temperature = float(p.get("min_temperature", 0.001))
+    max_iterations = p.get("max_iterations", 1000)
+    rng = random.Random(p.get("seed"))
 
     if not math.isfinite(temperature) or temperature <= 0 or min_temperature <= 0:
         raise ValueError("Temperatur harus lebih besar dari 0")
@@ -58,7 +58,7 @@ def simulated_annealing(initial_state, objective_function, neighbor_generator, p
 
     for iteration in range(max_iterations):
         if temperature <= min_temperature:
-            break # stop if temperature is under threshold
+            break
 
         candidate, candidate_value, has_improvement = sample_neighbor(current, current_value, objective_function, neighbor_generator, rng)
 
@@ -68,11 +68,11 @@ def simulated_annealing(initial_state, objective_function, neighbor_generator, p
         if candidate is None:
             break
 
-        delta = candidate_value - current_value # delta E
-        exponent = delta / temperature # delta E / T
+        delta = candidate_value - current_value
+        exponent = delta / temperature
 
         try:
-            e_deltaet = math.exp(exponent) # e^(delta E / T)
+            e_deltaet = math.exp(exponent)
         except OverflowError:
             e_deltaet = float("inf") if exponent > 0 else 0.0
 
@@ -81,7 +81,7 @@ def simulated_annealing(initial_state, objective_function, neighbor_generator, p
 
         accepted = (delta >= 0 or rng.random() < e_deltaet)
 
-        if accepted: # fulfilling rules either better value or worse value with probability
+        if accepted:
             if delta < 0:
                 accept_worse += 1
             current = candidate
