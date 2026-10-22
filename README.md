@@ -44,7 +44,7 @@ Sideways Move menerima parameter **Maksimum sideways move** dan menampilkan juml
 
 Random Restart menerima **Maksimum iterasi per pencarian** dan **Maksimum restart**. Restart dihitung setelah pencarian awal: maksimum restart 2 menghasilkan 3 pencarian. Seed pencarian adalah seed initial state ditambah indeks pencarian, mulai nol. Hasil menampilkan seed, jumlah iterasi, objective awal/akhir, dan grafik setiap pencarian. Grafik utama menampilkan objective terbaik seluruh pencarian terhadap total iterasi.
 
-Pada GA, visualisasi awal adalah individu terbaik populasi awal. Grafik menampilkan maksimum dan rata-rata populasi serta nilai terbaik sepanjang pencarian. Solusi terbaik dapat berbeda dari individu terbaik generasi terakhir jika elitisme dinonaktifkan.
+Pada GA, visualisasi awal adalah individu terbaik populasi awal. Grafik menampilkan maksimum dan rata-rata populasi serta nilai terbaik sepanjang pencarian. Seluruh individu generasi berikutnya dibentuk melalui seleksi parent, crossover atau penyalinan parent, dan mutasi. Solusi terbaik disimpan terpisah sehingga dapat berbeda dari individu terbaik generasi terakhir.
 
 Pada SA, panel analisis menampilkan grafik probabilitas penerimaan `min(1, exp(ΔE/T))` berwarna merah dan temperatur setelah iterasi berwarna oranye. Keduanya dapat diunduh dalam satu PNG. Bagian **Grafik tambahan** menyediakan eksponen dan faktor eksponensial mentah untuk analisis lebih lanjut.
 

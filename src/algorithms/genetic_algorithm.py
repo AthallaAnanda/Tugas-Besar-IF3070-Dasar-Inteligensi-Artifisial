@@ -95,15 +95,12 @@ def genetic_algorithm(initial_population, objective_function, parameters = None)
     max_iterations = p.get("max_iterations", 100)
     crossover_rate = float(p.get("crossover_rate", 0.8))
     mutation_rate = float(p.get("mutation_rate", 0.2))
-    elitism = p.get("elitism", 1)
     rng = random.Random(p.get("seed"))
 
     if type(population_size) is not int or population_size < 2:
         raise ValueError("population_size minimal bernilai 2") # need minimum of 2 population to select parents
     if type(max_iterations) is not int or max_iterations < 0:
         raise ValueError("max_iterations harus integer non-negatif") 
-    if type(elitism) is not int or not 0 <= elitism < population_size:
-        raise ValueError("elitism harus integer minimal 0 dan lebih kecil dari population_size")
     if any(not math.isfinite(rate) or not 0 <= rate <= 1
            for rate in (crossover_rate, mutation_rate)):
         raise ValueError("Probabilitas harus berhingga dan bernilai antara 0 dan 1")
@@ -137,8 +134,7 @@ def genetic_algorithm(initial_population, objective_function, parameters = None)
     best_history = [best_value]
 
     for iteration in range(max_iterations):
-        ranked = sorted(range(population_size), key = lambda i: scores[i], reverse = True) # sort the indices of the population based on their scores (descending)
-        next_population = [population[index].copy() for index in ranked[:elitism]] # keep the best individuals based on elitism
+        next_population = []
 
         while len(next_population) < population_size: 
             parent_a = select_parent(population, scores, rng) # pick from the population based on tournament selection

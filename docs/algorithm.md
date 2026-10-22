@@ -79,7 +79,7 @@ Sumber: `origin/feature/metaheuristic`, commit `6b13b2f`.
 
 Input awal berupa fungsi yang mengembalikan populasi State valid. Seluruh individu harus memakai definisi kapal dan kendaraan yang sama.
 
-Seleksi parent menggunakan tournament selection. Crossover memilih gene placement dari salah satu parent dengan peluang sama. Gene yang membuat child melanggar constraint dibatalkan. Mutasi memilih satu neighbor valid secara uniform. Elitisme menyalin sejumlah individu terbaik ke generasi berikutnya.
+Seleksi parent menggunakan roulette wheel selection. Crossover memilih gene placement dari salah satu parent dengan peluang sama. Gene yang membuat child melanggar constraint dibatalkan. Mutasi memilih satu neighbor valid secara uniform. Setiap generasi baru dimulai dari populasi kosong dan diisi seluruhnya melalui seleksi parent, crossover atau penyalinan parent, dan mutasi.
 
 | Parameter | Ketentuan |
 |---|---|
@@ -87,10 +87,8 @@ Seleksi parent menggunakan tournament selection. Crossover memilih gene placemen
 | `max_iterations` | Jumlah generasi, integer tidak negatif. |
 | `crossover_rate` | Angka 0 sampai 1. |
 | `mutation_rate` | Angka 0 sampai 1. |
-| `elitism` | Integer tidak negatif dan lebih kecil dari populasi. |
-| `tour_size` | Integer positif, tidak melebihi populasi. |
 | `seed` | Seed keputusan acak di dalam algoritma. |
 
 `history` menyimpan maksimum populasi, `mean_history` menyimpan rata-rata populasi, dan `best_history` menyimpan objective terbaik sepanjang pencarian. Ketiganya mencakup generasi nol dan memiliki panjang `max_iterations + 1`.
 
-`initial_state` adalah individu terbaik populasi awal. `final_state` adalah solusi terbaik sepanjang pencarian. Tanpa elitisme, maksimum generasi terakhir dapat lebih rendah dari nilai solusi terbaik.
+`initial_state` adalah individu terbaik populasi awal. `final_state` adalah solusi terbaik sepanjang pencarian, yang disimpan terpisah dari populasi. Maksimum generasi terakhir dapat lebih rendah dari nilai solusi terbaik.

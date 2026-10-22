@@ -29,9 +29,7 @@ API disajikan oleh Flask pada origin yang sama dengan frontend. Request POST men
     "population_size": 4,
     "max_iterations": 3,
     "crossover_rate": 0.8,
-    "mutation_rate": 0.2,
-    "elitism": 1,
-    "tour_size": 2
+    "mutation_rate": 0.2
   }
 }
 ```
@@ -44,7 +42,7 @@ API disajikan oleh Flask pada origin yang sama dengan frontend. Request POST men
 
 Frontend menyediakan pilihan seed **Acak** (default) dan **Manual**. Pilihan Acak mengirim `"seed": null` dan `"algorithm_seed": null` pada setiap request; kedua seed dibangkitkan secara terpisah oleh backend. Pilihan Manual mengirim nilai integer dari form. `configuration.seed` dan `configuration.algorithm_seed` pada respons/unduhan JSON selalu menyimpan nilai aktual yang digunakan, sehingga hasil acak dapat dijalankan kembali secara manual.
 
-GA memvalidasi bahwa elite lebih kecil dari populasi dan tournament size tidak melebihi populasi. Seed individu populasi awal dicatat dalam `configuration.population_seeds`.
+GA memvalidasi bahwa tournament size tidak melebihi populasi. Seed individu populasi awal dicatat dalam `configuration.population_seeds`.
 
 ### Pilihan algoritma HC
 
@@ -55,7 +53,7 @@ GA memvalidasi bahwa elite lebih kecil dari populasi dan tournament size tidak m
 | `sideways_move` | HC with Sideways Move | `max_iterations` positif; `maximum_sideways_move` integer tidak negatif. |
 | `random_restart` | Random Restart HC | `max_iterations` positif per pencarian; `maximum_restart` integer tidak negatif. |
 | `simulated_annealing` | SA | Parameter temperatur dan iterasi. |
-| `genetic_algorithm` | GA | Parameter populasi, generasi, seleksi, crossover, mutasi, dan elitisme. |
+| `genetic_algorithm` | GA | Parameter populasi, generasi, seleksi, crossover, dan mutasi. |
 
 Schema pada `/api/capabilities` menyertakan `uses_algorithm_seed: true` untuk Stochastic HC, Sideways, SA, dan GA. Seed algoritma diteruskan ke parameter `seed` fungsi algoritma. Steepest Ascent bersifat deterministik; Random Restart menggunakan seed initial state untuk urutan initial state-nya.
 
@@ -109,6 +107,6 @@ Input tidak valid menghasilkan HTTP 400. Content type tidak didukung menghasilka
 ```json
 {
   "status": "error",
-  "message": "Jumlah elite harus lebih kecil daripada jumlah populasi"
+  "message": "Tournament size tidak boleh melebihi jumlah populasi"
 }
 ```
