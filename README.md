@@ -157,7 +157,7 @@ Masukan tidak valid menghasilkan HTTP 400 dan jenis konten yang tidak didukung m
 
 ## Struktur Program
 
-| Direktori atau berkas | Keterangan |
+| Direktori Files | Keterangan |
 |---|---|
 | `src/core/` | Representasi persoalan, batasan, fungsi objektif, dan pembentukan neighbor. |
 | `src/algorithms/` | Implementasi algoritma local search. |
