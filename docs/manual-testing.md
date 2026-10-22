@@ -8,7 +8,7 @@ Jalankan `python -m src.app`, lalu buka `http://127.0.0.1:5000/`.
 2. Unggah dataset JSON atau edit dataset langsung. Data tersebut harus digunakan saat optimasi dijalankan.
 3. Ganti algoritma. Parameter harus sesuai dan nilai yang sudah diisi dipertahankan ketika kembali ke algoritma sebelumnya.
    Dropdown memuat empat varian HC, SA, dan GA. Pada mode seed Manual, seed algoritma aktif pada Stochastic, Sideways, SA, dan GA.
-4. Uji JSON tidak valid, batas iterasi negatif, populasi kurang dari dua, elite yang sama dengan populasi, dan mutation rate di luar 0 sampai 1. Pesan kesalahan harus terlihat dan form kembali dapat digunakan.
+4. Uji JSON tidak valid, batas iterasi negatif, populasi kurang dari dua, dan mutation rate di luar 0 sampai 1. Pesan kesalahan harus terlihat dan form kembali dapat digunakan. Pada GA, hanya maksimum generasi, jumlah populasi, crossover rate, dan mutation rate yang ditampilkan; parameter elite dan tournament size tidak tersedia. Request API yang masih mengirim `elitism` atau `tour_size` harus ditolak.
 
 ## Seed
 

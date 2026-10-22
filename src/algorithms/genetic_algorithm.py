@@ -57,10 +57,33 @@ def mutate(state, rng):
     else:
         return state.copy()
 
-def select_parent(population, scores, tour_size, rng):
-    participants = rng.sample(range(len(population)), tour_size)
-    winner = max(participants, key = lambda index: scores[index])
-    return population[winner]
+def select_parent(population, fitness_scores, rng):
+    if not population or len(population) != len(fitness_scores):
+        raise ValueError("population and fitness_scores harus memiliki panjang yang sama dan tidak kosong")
+
+    for fitness in fitness_scores:
+        if not math.isfinite(fitness) or fitness < 0:
+            raise ValueError("fitness_scores harus berhingga dan non-negatif")
+
+    total_fitness = sum(fitness_scores)
+    if not math.isfinite(total_fitness):
+        raise ValueError("total_fitness harus berhingga")
+
+    if total_fitness == 0:
+        return rng.choice(population)
+
+    spin = rng.random() * total_fitness
+    cumulative = 0.0
+    last_positive = None
+
+    for index, fitness in enumerate(fitness_scores):
+        if fitness > 0:
+            last_positive = index
+            cumulative += fitness
+            if cumulative >= spin:
+                return population[index]
+
+    return population[last_positive]
 
 def genetic_algorithm(initial_population, objective_function, parameters = None):
     started = time.perf_counter()
@@ -70,18 +93,12 @@ def genetic_algorithm(initial_population, objective_function, parameters = None)
     max_iterations = p.get("max_iterations", 100)
     crossover_rate = float(p.get("crossover_rate", 0.8))
     mutation_rate = float(p.get("mutation_rate", 0.2))
-    elitism = p.get("elitism", 1)
-    tour_size = p.get("tour_size", 2)
     rng = random.Random(p.get("seed"))
 
     if type(population_size) is not int or population_size < 2:
         raise ValueError("population_size minimal bernilai 2")
     if type(max_iterations) is not int or max_iterations < 0:
         raise ValueError("max_iterations harus integer non-negatif") 
-    if type(elitism) is not int or not 0 <= elitism < population_size:
-        raise ValueError("elitism harus integer minimal 0 dan lebih kecil dari population_size")
-    if (type(tour_size) is not int or not 1 <= tour_size <= population_size):
-        raise ValueError("tour_size harus integer bernilai antara 1 dan population_size")
     if any(not math.isfinite(rate) or not 0 <= rate <= 1
            for rate in (crossover_rate, mutation_rate)):
         raise ValueError("Probabilitas harus berhingga dan bernilai antara 0 dan 1")
@@ -115,12 +132,11 @@ def genetic_algorithm(initial_population, objective_function, parameters = None)
     best_history = [best_value]
 
     for iteration in range(max_iterations):
-        ranked = sorted(range(population_size), key = lambda i: scores[i], reverse = True)
-        next_population = [population[index].copy() for index in ranked[:elitism]]
+        next_population = []
 
         while len(next_population) < population_size: 
-            parent_a = select_parent(population, scores, tour_size, rng)
-            parent_b = select_parent(population, scores, tour_size, rng)
+            parent_a = select_parent(population, scores, rng)
+            parent_b = select_parent(population, scores, rng)
 
             if rng.random() < crossover_rate:
                 child = crossover(parent_a, parent_b, rng)

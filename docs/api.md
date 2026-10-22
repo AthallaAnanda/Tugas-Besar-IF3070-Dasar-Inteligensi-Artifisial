@@ -29,9 +29,7 @@ API disajikan oleh Flask pada origin yang sama dengan frontend. Request POST men
     "population_size": 4,
     "max_iterations": 3,
     "crossover_rate": 0.8,
-    "mutation_rate": 0.2,
-    "elitism": 1,
-    "tour_size": 2
+    "mutation_rate": 0.2
   }
 }
 ```
@@ -46,7 +44,7 @@ Frontend menyediakan pilihan seed **Acak** (default) dan **Manual**. Pilihan Aca
 
 Setiap item `objectives` pada `/api/capabilities` menyertakan `id`, `label`, dan `description`. Seluruh algoritma mendukung kedua pilihan objective.
 
-GA memvalidasi bahwa elite lebih kecil dari populasi dan tournament size tidak melebihi populasi. Seed individu populasi awal dicatat dalam `configuration.population_seeds`.
+GA memakai roulette wheel selection tanpa elitisme. Parameter yang tersedia adalah `population_size`, `max_iterations`, `crossover_rate`, dan `mutation_rate`; `elitism` dan `tour_size` tidak didukung dan ditolak sebagai parameter tidak dikenal. Seed individu populasi awal dicatat dalam `configuration.population_seeds`.
 
 ### Pilihan algoritma HC
 
@@ -57,7 +55,7 @@ GA memvalidasi bahwa elite lebih kecil dari populasi dan tournament size tidak m
 | `sideways_move` | HC with Sideways Move | `max_iterations` positif; `maximum_sideways_move` integer tidak negatif. |
 | `random_restart` | Random Restart HC | `max_iterations` positif per pencarian; `maximum_restart` integer tidak negatif. |
 | `simulated_annealing` | SA | Parameter temperatur dan iterasi. |
-| `genetic_algorithm` | GA | Parameter populasi, generasi, seleksi, crossover, mutasi, dan elitisme. |
+| `genetic_algorithm` | GA | Parameter populasi, generasi, crossover, dan mutasi; seleksi roulette wheel. |
 
 Schema pada `/api/capabilities` menyertakan `uses_algorithm_seed: true` untuk Stochastic HC, Sideways, SA, dan GA. Seed algoritma diteruskan ke parameter `seed` fungsi algoritma. Steepest Ascent bersifat deterministik; Random Restart menggunakan seed initial state untuk urutan initial state-nya.
 
@@ -131,6 +129,6 @@ Input tidak valid menghasilkan HTTP 400. Content type tidak didukung menghasilka
 ```json
 {
   "status": "error",
-  "message": "Jumlah elite harus lebih kecil daripada jumlah populasi"
+  "message": "population_size tidak memenuhi batas min: 2"
 }
 ```

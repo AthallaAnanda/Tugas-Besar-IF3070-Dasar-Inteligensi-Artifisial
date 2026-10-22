@@ -45,9 +45,9 @@ def test_genetic_api_reproducibility_and_population_seeds():
 
 
 @pytest.mark.parametrize("parameters", [
-    {"population_size": 1}, {"population_size": True}, {"population_size": 3, "elitism": 3},
-    {"population_size": 2, "tour_size": 3}, {"crossover_rate": 1.1}, {"mutation_rate": -0.1},
-    {"tour_size": 0}, {"max_iterations": -1},
+    {"population_size": 1}, {"population_size": True}, {"elitism": 1},
+    {"tour_size": 2}, {"crossover_rate": 1.1}, {"mutation_rate": -0.1},
+    {"max_iterations": -1},
 ])
 def test_genetic_api_rejects_invalid_parameters(parameters):
     response = app.test_client().post("/api/optimize", json=ga_config(**parameters))
@@ -77,7 +77,7 @@ def test_genetic_preserves_best_when_last_generation_is_worse(monkeypatch):
         return state_with("A")
     monkeypatch.setattr(module, "crossover", lower_child)
     result = module.genetic_algorithm(lambda: initial, objective_1, {
-        "population_size": 2, "max_iterations": 1, "elitism": 0,
+        "population_size": 2, "max_iterations": 1,
         "crossover_rate": 1, "mutation_rate": 0, "seed": 42,
     })
     assert result["history"] == [20, 10]
@@ -85,6 +85,16 @@ def test_genetic_preserves_best_when_last_generation_is_worse(monkeypatch):
     assert objective_1(result["final_state"]) == 20
     assert result["mean_history"][-1] == 10
     assert [state.to_dict() for state in initial] == before
+
+
+def test_genetic_capabilities_and_result_only_expose_used_parameters():
+    client = app.test_client()
+    capabilities = client.get("/api/capabilities").get_json()
+    expected = {"population_size", "max_iterations", "crossover_rate", "mutation_rate"}
+    assert set(capabilities["algorithms"]["genetic_algorithm"]["parameters"]) == expected
+    response = client.post("/api/optimize", json=ga_config(max_iterations=0))
+    assert response.status_code == 200
+    assert set(response.get_json()["configuration"]["parameters"]) == expected
 
 
 def test_crossover_and_mutation_preserve_constraints_and_parents():

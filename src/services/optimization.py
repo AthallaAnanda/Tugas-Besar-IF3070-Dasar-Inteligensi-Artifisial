@@ -82,8 +82,6 @@ ALGORITHMS = {
             "population_size": {"label": "Jumlah populasi", "type": "integer", "default": 50, "min": 2},
             "crossover_rate": {"label": "Crossover rate", "type": "number", "default": 0.8, "min": 0, "max": 1},
             "mutation_rate": {"label": "Mutation rate", "type": "number", "default": 0.2, "min": 0, "max": 1},
-            "elitism": {"label": "Jumlah elite", "type": "integer", "default": 1, "min": 0},
-            "tour_size": {"label": "Tournament size", "type": "integer", "default": 2, "min": 1},
         },
     },
 }
@@ -130,13 +128,7 @@ def read_seed(value, name):
 
 
 def validate_parameters(algorithm, supplied):
-    parameters = validate_fields(supplied, ALGORITHMS[algorithm]["parameters"])
-    if algorithm == "genetic_algorithm":
-        if parameters["elitism"] >= parameters["population_size"]:
-            raise ValueError("Jumlah elite harus lebih kecil daripada jumlah populasi")
-        if parameters["tour_size"] > parameters["population_size"]:
-            raise ValueError("Tournament size tidak boleh melebihi jumlah populasi")
-    return parameters
+    return validate_fields(supplied, ALGORITHMS[algorithm]["parameters"])
 
 
 def prepare_optimization(config):

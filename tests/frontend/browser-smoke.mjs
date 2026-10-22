@@ -208,10 +208,9 @@ try {
 
   await page.locator("#algorithm").selectOption("genetic_algorithm");
   assert.equal(await page.locator('#parameters [data-parameter="population_size"]').inputValue(), "4");
-  await page.locator('#parameters [data-parameter="elitism"]').fill("4");
-  assert.equal((await optimize()).response.status(), 400);
-  assert.match(await page.locator("#message").innerText(), /elite/);
-  await page.locator('#parameters [data-parameter="elitism"]').fill("1");
+  assert.equal(await page.locator('#parameters [data-parameter="elitism"]').count(), 0);
+  assert.equal(await page.locator('#parameters [data-parameter="tour_size"]').count(), 0);
+  assert.equal(await page.locator("#parameters input").count(), 4);
 
   const originalProblem = await page.locator("#problem").inputValue();
   await page.locator("#optimization-form details summary").click();
