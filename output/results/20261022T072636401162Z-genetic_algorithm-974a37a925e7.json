@@ -1,0 +1,833 @@
+{
+  "status": "success",
+  "objective_value": 97.82608695652175,
+  "iterations": 20,
+  "duration": 16.66949917399961,
+  "initial_state": {
+    "vehicles": [
+      {
+        "id": "A",
+        "width": 2,
+        "length": 2,
+        "shipping_fee": 60,
+        "weight": 3,
+        "eta": 2
+      },
+      {
+        "id": "B",
+        "width": 1,
+        "length": 3,
+        "shipping_fee": 40,
+        "weight": 4,
+        "eta": 1
+      },
+      {
+        "id": "C",
+        "width": 2,
+        "length": 1,
+        "shipping_fee": 30,
+        "weight": 2,
+        "eta": 3
+      },
+      {
+        "id": "D",
+        "width": 1,
+        "length": 1,
+        "shipping_fee": 10,
+        "weight": 1,
+        "eta": 0
+      },
+      {
+        "id": "E",
+        "width": 4,
+        "length": 2,
+        "shipping_fee": 70,
+        "weight": 2,
+        "eta": 3
+      },
+      {
+        "id": "F",
+        "width": 3,
+        "length": 1,
+        "shipping_fee": 35,
+        "weight": 2,
+        "eta": 4
+      },
+      {
+        "id": "G",
+        "width": 1,
+        "length": 4,
+        "shipping_fee": 55,
+        "weight": 5,
+        "eta": 2
+      },
+      {
+        "id": "H",
+        "width": 3,
+        "length": 2,
+        "shipping_fee": 80,
+        "weight": 4,
+        "eta": 5
+      },
+      {
+        "id": "I",
+        "width": 2,
+        "length": 3,
+        "shipping_fee": 65,
+        "weight": 3,
+        "eta": 1
+      },
+      {
+        "id": "J",
+        "width": 2,
+        "length": 1,
+        "shipping_fee": 20,
+        "weight": 1,
+        "eta": 0
+      },
+      {
+        "id": "K",
+        "width": 1,
+        "length": 2,
+        "shipping_fee": 25,
+        "weight": 2,
+        "eta": 4
+      },
+      {
+        "id": "L",
+        "width": 3,
+        "length": 3,
+        "shipping_fee": 90,
+        "weight": 5,
+        "eta": 3
+      },
+      {
+        "id": "M",
+        "width": 4,
+        "length": 1,
+        "shipping_fee": 45,
+        "weight": 3,
+        "eta": 2
+      },
+      {
+        "id": "N",
+        "width": 2,
+        "length": 2,
+        "shipping_fee": 50,
+        "weight": 2,
+        "eta": 5
+      },
+      {
+        "id": "O",
+        "width": 2,
+        "length": 4,
+        "shipping_fee": 75,
+        "weight": 4,
+        "eta": 1
+      },
+      {
+        "id": "P",
+        "width": 1,
+        "length": 6,
+        "shipping_fee": 85,
+        "weight": 5,
+        "eta": 6
+      },
+      {
+        "id": "Q",
+        "width": 7,
+        "length": 1,
+        "shipping_fee": 95,
+        "weight": 3,
+        "eta": 4
+      },
+      {
+        "id": "R",
+        "width": 2,
+        "length": 5,
+        "shipping_fee": 110,
+        "weight": 6,
+        "eta": 2
+      },
+      {
+        "id": "S",
+        "width": 4,
+        "length": 3,
+        "shipping_fee": 120,
+        "weight": 6,
+        "eta": 0
+      },
+      {
+        "id": "T",
+        "width": 5,
+        "length": 2,
+        "shipping_fee": 100,
+        "weight": 3,
+        "eta": 6
+      },
+      {
+        "id": "U",
+        "width": 1,
+        "length": 7,
+        "shipping_fee": 60,
+        "weight": 2,
+        "eta": 3
+      },
+      {
+        "id": "V",
+        "width": 3,
+        "length": 3,
+        "shipping_fee": 105,
+        "weight": 2,
+        "eta": 7
+      },
+      {
+        "id": "W",
+        "width": 1,
+        "length": 1,
+        "shipping_fee": 18,
+        "weight": 1,
+        "eta": 7
+      },
+      {
+        "id": "X",
+        "width": 6,
+        "length": 2,
+        "shipping_fee": 130,
+        "weight": 7,
+        "eta": 5
+      },
+      {
+        "id": "Y",
+        "width": 3,
+        "length": 4,
+        "shipping_fee": 70,
+        "weight": 4,
+        "eta": 2
+      }
+    ],
+    "ships": [
+      {
+        "ship": {
+          "id": "ship_1",
+          "width": 7,
+          "length": 6,
+          "max_capacity": 15
+        },
+        "placements": [
+          {
+            "vehicle_id": "D",
+            "ship_id": "ship_1",
+            "x": 6,
+            "y": 1,
+            "orientation": "horizontal"
+          },
+          {
+            "vehicle_id": "O",
+            "ship_id": "ship_1",
+            "x": 4,
+            "y": 0,
+            "orientation": "horizontal"
+          },
+          {
+            "vehicle_id": "U",
+            "ship_id": "ship_1",
+            "x": 0,
+            "y": 4,
+            "orientation": "vertical"
+          },
+          {
+            "vehicle_id": "A",
+            "ship_id": "ship_1",
+            "x": 2,
+            "y": 1,
+            "orientation": "vertical"
+          },
+          {
+            "vehicle_id": "J",
+            "ship_id": "ship_1",
+            "x": 3,
+            "y": 5,
+            "orientation": "horizontal"
+          },
+          {
+            "vehicle_id": "C",
+            "ship_id": "ship_1",
+            "x": 2,
+            "y": 0,
+            "orientation": "horizontal"
+          },
+          {
+            "vehicle_id": "E",
+            "ship_id": "ship_1",
+            "x": 0,
+            "y": 0,
+            "orientation": "vertical"
+          }
+        ],
+        "grid": [
+          [
+            "E",
+            "E",
+            "C",
+            "C",
+            "O",
+            "O",
+            null
+          ],
+          [
+            "E",
+            "E",
+            "A",
+            "A",
+            "O",
+            "O",
+            "D"
+          ],
+          [
+            "E",
+            "E",
+            "A",
+            "A",
+            "O",
+            "O",
+            null
+          ],
+          [
+            "E",
+            "E",
+            null,
+            null,
+            "O",
+            "O",
+            null
+          ],
+          [
+            "U",
+            "U",
+            "U",
+            "U",
+            "U",
+            "U",
+            "U"
+          ],
+          [
+            null,
+            null,
+            null,
+            "J",
+            "J",
+            null,
+            null
+          ]
+        ]
+      }
+    ],
+    "outside_vehicle_ids": [
+      "B",
+      "F",
+      "G",
+      "H",
+      "I",
+      "K",
+      "L",
+      "M",
+      "N",
+      "P",
+      "Q",
+      "R",
+      "S",
+      "T",
+      "V",
+      "W",
+      "X",
+      "Y"
+    ],
+    "value": 40.625
+  },
+  "final_state": {
+    "vehicles": [
+      {
+        "id": "A",
+        "width": 2,
+        "length": 2,
+        "shipping_fee": 60,
+        "weight": 3,
+        "eta": 2
+      },
+      {
+        "id": "B",
+        "width": 1,
+        "length": 3,
+        "shipping_fee": 40,
+        "weight": 4,
+        "eta": 1
+      },
+      {
+        "id": "C",
+        "width": 2,
+        "length": 1,
+        "shipping_fee": 30,
+        "weight": 2,
+        "eta": 3
+      },
+      {
+        "id": "D",
+        "width": 1,
+        "length": 1,
+        "shipping_fee": 10,
+        "weight": 1,
+        "eta": 0
+      },
+      {
+        "id": "E",
+        "width": 4,
+        "length": 2,
+        "shipping_fee": 70,
+        "weight": 2,
+        "eta": 3
+      },
+      {
+        "id": "F",
+        "width": 3,
+        "length": 1,
+        "shipping_fee": 35,
+        "weight": 2,
+        "eta": 4
+      },
+      {
+        "id": "G",
+        "width": 1,
+        "length": 4,
+        "shipping_fee": 55,
+        "weight": 5,
+        "eta": 2
+      },
+      {
+        "id": "H",
+        "width": 3,
+        "length": 2,
+        "shipping_fee": 80,
+        "weight": 4,
+        "eta": 5
+      },
+      {
+        "id": "I",
+        "width": 2,
+        "length": 3,
+        "shipping_fee": 65,
+        "weight": 3,
+        "eta": 1
+      },
+      {
+        "id": "J",
+        "width": 2,
+        "length": 1,
+        "shipping_fee": 20,
+        "weight": 1,
+        "eta": 0
+      },
+      {
+        "id": "K",
+        "width": 1,
+        "length": 2,
+        "shipping_fee": 25,
+        "weight": 2,
+        "eta": 4
+      },
+      {
+        "id": "L",
+        "width": 3,
+        "length": 3,
+        "shipping_fee": 90,
+        "weight": 5,
+        "eta": 3
+      },
+      {
+        "id": "M",
+        "width": 4,
+        "length": 1,
+        "shipping_fee": 45,
+        "weight": 3,
+        "eta": 2
+      },
+      {
+        "id": "N",
+        "width": 2,
+        "length": 2,
+        "shipping_fee": 50,
+        "weight": 2,
+        "eta": 5
+      },
+      {
+        "id": "O",
+        "width": 2,
+        "length": 4,
+        "shipping_fee": 75,
+        "weight": 4,
+        "eta": 1
+      },
+      {
+        "id": "P",
+        "width": 1,
+        "length": 6,
+        "shipping_fee": 85,
+        "weight": 5,
+        "eta": 6
+      },
+      {
+        "id": "Q",
+        "width": 7,
+        "length": 1,
+        "shipping_fee": 95,
+        "weight": 3,
+        "eta": 4
+      },
+      {
+        "id": "R",
+        "width": 2,
+        "length": 5,
+        "shipping_fee": 110,
+        "weight": 6,
+        "eta": 2
+      },
+      {
+        "id": "S",
+        "width": 4,
+        "length": 3,
+        "shipping_fee": 120,
+        "weight": 6,
+        "eta": 0
+      },
+      {
+        "id": "T",
+        "width": 5,
+        "length": 2,
+        "shipping_fee": 100,
+        "weight": 3,
+        "eta": 6
+      },
+      {
+        "id": "U",
+        "width": 1,
+        "length": 7,
+        "shipping_fee": 60,
+        "weight": 2,
+        "eta": 3
+      },
+      {
+        "id": "V",
+        "width": 3,
+        "length": 3,
+        "shipping_fee": 105,
+        "weight": 2,
+        "eta": 7
+      },
+      {
+        "id": "W",
+        "width": 1,
+        "length": 1,
+        "shipping_fee": 18,
+        "weight": 1,
+        "eta": 7
+      },
+      {
+        "id": "X",
+        "width": 6,
+        "length": 2,
+        "shipping_fee": 130,
+        "weight": 7,
+        "eta": 5
+      },
+      {
+        "id": "Y",
+        "width": 3,
+        "length": 4,
+        "shipping_fee": 70,
+        "weight": 4,
+        "eta": 2
+      }
+    ],
+    "ships": [
+      {
+        "ship": {
+          "id": "ship_1",
+          "width": 7,
+          "length": 6,
+          "max_capacity": 15
+        },
+        "placements": [
+          {
+            "vehicle_id": "J",
+            "ship_id": "ship_1",
+            "x": 4,
+            "y": 1,
+            "orientation": "horizontal"
+          },
+          {
+            "vehicle_id": "S",
+            "ship_id": "ship_1",
+            "x": 3,
+            "y": 3,
+            "orientation": "horizontal"
+          },
+          {
+            "vehicle_id": "D",
+            "ship_id": "ship_1",
+            "x": 0,
+            "y": 1,
+            "orientation": "horizontal"
+          }
+        ],
+        "grid": [
+          [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "D",
+            null,
+            null,
+            null,
+            "J",
+            "J",
+            null
+          ],
+          [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            null,
+            null,
+            null,
+            "S",
+            "S",
+            "S",
+            "S"
+          ],
+          [
+            null,
+            null,
+            null,
+            "S",
+            "S",
+            "S",
+            "S"
+          ],
+          [
+            null,
+            null,
+            null,
+            "S",
+            "S",
+            "S",
+            "S"
+          ]
+        ]
+      }
+    ],
+    "outside_vehicle_ids": [
+      "A",
+      "B",
+      "C",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "P",
+      "Q",
+      "R",
+      "T",
+      "U",
+      "V",
+      "W",
+      "X",
+      "Y"
+    ],
+    "value": 97.82608695652175
+  },
+  "history": [
+    40.625,
+    35.625,
+    85.71428571428572,
+    95.45454545454545,
+    95.45454545454545,
+    95.45454545454545,
+    95.45454545454545,
+    95.45454545454545,
+    95.45454545454545,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175
+  ],
+  "best_history": [
+    40.625,
+    40.625,
+    85.71428571428572,
+    95.45454545454545,
+    95.45454545454545,
+    95.45454545454545,
+    95.45454545454545,
+    95.45454545454545,
+    95.45454545454545,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175,
+    97.82608695652175
+  ],
+  "mean_history": [
+    21.739575123152708,
+    19.863550278223723,
+    21.296257173921937,
+    23.73041687672453,
+    30.391393179109254,
+    37.04628132997557,
+    51.50018744637323,
+    57.28095828034531,
+    63.02889681775551,
+    66.2594922397514,
+    70.63342148189975,
+    79.39341552971987,
+    73.9140356487313,
+    81.17039471398166,
+    78.60845647548908,
+    77.26438187416448,
+    81.01210435940871,
+    80.37087476211389,
+    78.97048072298072,
+    76.86594430328127,
+    76.7290637727257
+  ],
+  "metrics": {
+    "population_size": 50
+  },
+  "initialization_duration": 0.24709160600014002,
+  "algorithm": "genetic_algorithm",
+  "step_type": "generation",
+  "stop_reason": "max_iterations",
+  "statistics": {
+    "total_shipping_fee": 150,
+    "loaded_count": 3,
+    "outside_count": 22,
+    "ships": [
+      {
+        "ship_id": "ship_1",
+        "loaded_count": 3,
+        "shipping_fee": 150,
+        "max_eta": 0,
+        "weight": 8,
+        "max_capacity": 15,
+        "occupied_area": 15,
+        "deck_area": 42,
+        "area_utilization": 0.35714285714285715
+      }
+    ]
+  },
+  "configuration": {
+    "algorithm": "genetic_algorithm",
+    "variant": null,
+    "objective": "objective_2",
+    "seed": 44,
+    "algorithm_seed": 42,
+    "parameters": {
+      "max_iterations": 20,
+      "population_size": 50,
+      "crossover_rate": 0.8,
+      "mutation_rate": 0.2
+    },
+    "population_seeds": [
+      1754648232,
+      2233470993,
+      2327752056,
+      3013410123,
+      3702419103,
+      501031174,
+      758773163,
+      1630235861,
+      967052798,
+      1243685520,
+      124971754,
+      965020951,
+      501010221,
+      2442501533,
+      37819876,
+      430270278,
+      672979859,
+      3326227947,
+      2206381422,
+      2958456850,
+      4249839700,
+      1301300091,
+      2978603888,
+      2723067917,
+      1625329732,
+      2538313555,
+      1739666769,
+      3290356902,
+      2969152252,
+      2877773253,
+      1400674194,
+      1538819635,
+      315909594,
+      1455224700,
+      3614313327,
+      1214314448,
+      2650939544,
+      683107736,
+      481078539,
+      2194788720,
+      300934141,
+      2528098404,
+      406422226,
+      1159647799,
+      4118543995,
+      1354754966,
+      462640403,
+      4050660574,
+      2685715924,
+      3529719149
+    ]
+  },
+  "output": {
+    "status": "saved",
+    "run_id": "20261022T072636401162Z-genetic_algorithm-974a37a925e7",
+    "result": "output/results/20261022T072636401162Z-genetic_algorithm-974a37a925e7.json",
+    "plots": [
+      "output/plots/20261022T072636401162Z-genetic_algorithm-974a37a925e7-objective.png"
+    ]
+  }
+}

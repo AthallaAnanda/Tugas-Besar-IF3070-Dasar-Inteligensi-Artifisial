@@ -12,7 +12,7 @@ from .optimization import ALGORITHMS
 
 
 PLOT_LOCK = Lock()
-PRIMARY_COLOR = "#386641"
+PRIMARY_COLOR = "#2e7d32"
 
 
 def plot_title(result, subject):

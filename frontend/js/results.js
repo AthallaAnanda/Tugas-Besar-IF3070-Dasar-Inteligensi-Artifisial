@@ -1,4 +1,4 @@
-export const PRIMARY_COLOR = "#386641";
+export const PRIMARY_COLOR = "#2e7d32";
 
 export function algorithmLabel(result) {
   const labels = {

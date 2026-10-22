@@ -122,7 +122,7 @@ def test_sa_exponential_plot_preserves_factors_above_one_and_marks_overflow(monk
         line = axes.lines[0]
         assert list(line.get_xdata()) == [1, 2, 3, 4, 5]
         assert list(line.get_ydata())[:4] == [0, 0.5, 1, 3]
-        assert line.get_color() == "#386641"
+        assert line.get_color() == "#2e7d32"
         assert "Simulated Annealing" in axes.get_title()
         assert any("1 nilai overflow" in text.get_text() for text in figure.texts)
     finally:
